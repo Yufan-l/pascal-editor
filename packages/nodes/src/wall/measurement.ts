@@ -40,6 +40,7 @@ export function wallMeasurementFeatures(wall: WallNode): MeasurementFeature[] {
     {
       id: 'wall:start',
       label: 'Wall start',
+      labelKey: 'nodes.wall.measurement.start',
       snapKind: 'endpoint',
       priority: 100,
       geometry: { kind: 'point', point: point(wall.start[0], 0, wall.start[1]) },
@@ -47,6 +48,7 @@ export function wallMeasurementFeatures(wall: WallNode): MeasurementFeature[] {
     {
       id: 'wall:end',
       label: 'Wall end',
+      labelKey: 'nodes.wall.measurement.end',
       snapKind: 'endpoint',
       priority: 100,
       geometry: { kind: 'point', point: point(wall.end[0], 0, wall.end[1]) },
@@ -54,6 +56,7 @@ export function wallMeasurementFeatures(wall: WallNode): MeasurementFeature[] {
     {
       id: 'wall:centerline',
       label: 'Wall centerline',
+      labelKey: 'nodes.wall.measurement.centerline',
       snapKind: 'edge',
       priority: 80,
       geometry: { kind: 'path', points: centerline },
@@ -61,6 +64,7 @@ export function wallMeasurementFeatures(wall: WallNode): MeasurementFeature[] {
     {
       id: 'wall:midpoint',
       label: 'Wall midpoint',
+      labelKey: 'nodes.wall.measurement.midpoint',
       snapKind: 'midpoint',
       priority: 90,
       geometry: { kind: 'point', point: point(midpoint.x, 0, midpoint.y) },
@@ -70,6 +74,7 @@ export function wallMeasurementFeatures(wall: WallNode): MeasurementFeature[] {
           {
             id: 'wall:curve:center',
             label: 'Wall arc center',
+            labelKey: 'nodes.wall.measurement.arcCenter',
             snapKind: 'center' as const,
             priority: 90,
             geometry: { kind: 'point' as const, point: point(arc.center.x, 0, arc.center.y) },
@@ -79,6 +84,7 @@ export function wallMeasurementFeatures(wall: WallNode): MeasurementFeature[] {
     {
       id: 'wall:face:left',
       label: 'Wall face',
+      labelKey: 'nodes.wall.measurement.face',
       snapKind: 'face',
       priority: 95,
       geometry: { kind: 'path', points: leftFace },
@@ -86,6 +92,7 @@ export function wallMeasurementFeatures(wall: WallNode): MeasurementFeature[] {
     {
       id: 'wall:face:right',
       label: 'Wall face',
+      labelKey: 'nodes.wall.measurement.face',
       snapKind: 'face',
       priority: 95,
       geometry: { kind: 'path', points: rightFace },
@@ -93,6 +100,7 @@ export function wallMeasurementFeatures(wall: WallNode): MeasurementFeature[] {
     {
       id: 'wall:height',
       label: 'Wall height',
+      labelKey: 'nodes.wall.measurement.height',
       snapKind: 'height',
       priority: 85,
       geometry: {
@@ -104,6 +112,7 @@ export function wallMeasurementFeatures(wall: WallNode): MeasurementFeature[] {
     {
       id: 'wall:top-centerline',
       label: 'Wall top',
+      labelKey: 'nodes.wall.measurement.top',
       snapKind: 'edge',
       priority: 75,
       geometry: {

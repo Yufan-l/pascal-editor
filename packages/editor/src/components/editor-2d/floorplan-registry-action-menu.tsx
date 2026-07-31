@@ -14,11 +14,13 @@ import {
   useScene,
   type WallNode,
 } from '@pascal-app/core'
+import { useI18n } from '@pascal-app/i18n'
 import { useViewer } from '@pascal-app/viewer'
 import { type MouseEvent, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { useReducedMotion } from '../../hooks/use-reduced-motion'
+import { translateRegistryMessage } from '../../i18n/registry'
 import { resolveMoveActionNode } from '../../lib/direct-manipulation'
 import { getFloorplanNodeExtension } from '../../lib/floorplan/floorplan-extension'
 import {
@@ -125,6 +127,7 @@ function collectQuickActionNodes(
  * Hidden while moving or curving so the menu does not compete with the active affordance.
  */
 export function FloorplanRegistryActionMenu() {
+  const { t } = useI18n()
   const reducedMotion = useReducedMotion()
   // Sole selection only — a multi-selection gets the group menu
   // (`FloorplanGroupActionMenu`), whose actions target the whole selection.
@@ -393,31 +396,37 @@ export function FloorplanRegistryActionMenu() {
           onPointerDown={(event) => event.stopPropagation()}
           onPointerUp={(event) => event.stopPropagation()}
         >
-          {quickActions.map((action) => (
-            <button
-              aria-disabled={action.disabled || undefined}
-              aria-label={action.title ?? action.label}
-              className={cn(
-                'tooltip-trigger flex items-center rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground',
-                action.disabled &&
-                  'cursor-not-allowed opacity-40 hover:bg-transparent hover:text-muted-foreground',
-              )}
-              disabled={action.disabled && !action.blockedFeedback}
-              key={action.id}
-              onClick={(event) => handleQuickAction(action, event)}
-              title={action.title ?? action.label}
-              type="button"
-            >
-              <span className="flex items-center gap-1.5" data-quick-action-feedback>
-                <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-current">
-                  <QuickActionIcon action={action} />
+          {quickActions.map((action) => {
+            const label = translateRegistryMessage(t, action.labelKey, action.label)
+            const title = action.title
+              ? translateRegistryMessage(t, action.titleKey, action.title)
+              : label
+            return (
+              <button
+                aria-disabled={action.disabled || undefined}
+                aria-label={title}
+                className={cn(
+                  'tooltip-trigger flex items-center rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground',
+                  action.disabled &&
+                    'cursor-not-allowed opacity-40 hover:bg-transparent hover:text-muted-foreground',
+                )}
+                disabled={action.disabled && !action.blockedFeedback}
+                key={action.id}
+                onClick={(event) => handleQuickAction(action, event)}
+                title={title}
+                type="button"
+              >
+                <span className="flex items-center gap-1.5" data-quick-action-feedback>
+                  <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-current">
+                    <QuickActionIcon action={action} />
+                  </span>
+                  <span className="whitespace-nowrap leading-none" data-quick-action-label>
+                    {label}
+                  </span>
                 </span>
-                <span className="whitespace-nowrap leading-none" data-quick-action-label>
-                  {action.label}
-                </span>
-              </span>
-            </button>
-          ))}
+              </button>
+            )
+          })}
         </div>
       ) : null}
     </div>,

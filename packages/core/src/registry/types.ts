@@ -104,6 +104,8 @@ export type MeasurementFeature = {
   /** Stable within the node kind; presentation labels must not be used as IDs. */
   id: string
   label: string
+  /** Optional localized-message ID; consumers fall back to `label`. */
+  labelKey?: string
   snapKind: MeasurementSnapKind
   geometry: MeasurementFeatureGeometry
   /**
@@ -127,7 +129,11 @@ export type QuickMeasurementQuantity = 'length' | 'area' | 'volume'
 export type QuickMeasurementMetric = {
   key: string
   label: string
+  /** Optional localized-message ID; consumers fall back to `label`. */
+  labelKey?: string
   abbreviation: string
+  /** Optional localized-message ID; consumers fall back to `abbreviation`. */
+  abbreviationKey?: string
   quantity: QuickMeasurementQuantity
   /** Canonical metres, square metres, or cubic metres according to `quantity`. */
   value: number
@@ -135,11 +141,17 @@ export type QuickMeasurementMetric = {
 
 export type QuickMeasurementReport = {
   title: string
+  /** Optional localized-message ID; consumers fall back to `title`. */
+  titleKey?: string
   kindLabel: string
+  /** Optional localized-message ID; consumers fall back to `kindLabel`. */
+  kindLabelKey?: string
   /** Stable level-local label anchor chosen by the node kind. */
   anchor: MeasurementPoint
   metrics: QuickMeasurementMetric[]
   note?: string
+  /** Optional localized-message ID; consumers fall back to `note`. */
+  noteKey?: string
 }
 
 export type MeasurementContribution<N = AnyNode> = {
@@ -306,8 +318,12 @@ export type NodePort = {
 export type ToolHint = {
   /** Key combo or input label, e.g. 'Left click', 'Shift', 'Esc'. */
   key: string
+  /** Optional localized-message ID for a mouse/input label; physical keycaps stay literal. */
+  keyLabelKey?: string
   /** Description of what the input does. Sentence case. */
   label: string
+  /** Optional localized-message ID; consumers fall back to `label`. */
+  labelKey?: string
   /**
    * Only show this hint once the in-progress draft has at least this many
    * vertices (reads `useEditor.draftVertexCount`). Lets a polygon tool's
@@ -335,10 +351,14 @@ export type ToolHintChip = {
   cycle: () => void
   /** value → chip row label, e.g. `{ cabinet: 'Type: Cabinet', island: 'Type: Island' }`. */
   labels: Record<string, string>
+  /** value → localized-message ID; consumers fall back to the matching `labels` value. */
+  labelKeys?: Record<string, string>
   /** value → iconify icon name. */
   icons?: Record<string, string>
   /** Hover tooltip, e.g. 'Placement type — click or press I to cycle'. */
   tooltip?: string
+  /** Optional localized-message ID; consumers fall back to `tooltip`. */
+  tooltipKey?: string
 }
 
 export type FloorplanGeometry =
@@ -1374,8 +1394,12 @@ export type KeyboardAction = {
 export type Presentation = {
   /** Sentence-case label shown in palette buttons, breadcrumbs, etc. */
   label: string
+  /** Optional localized-message ID; consumers fall back to `label`. */
+  labelKey?: string
   /** Optional longer tooltip / help text. */
   description?: string
+  /** Optional localized-message ID; consumers fall back to `description`. */
+  descriptionKey?: string
   /** Icon for palette buttons and tree views. */
   icon: IconRef
   /** Tool palette section. Defaults to `category` when omitted. */
@@ -1629,6 +1653,8 @@ export type Capabilities = {
 export type SlotDeclaration = {
   slotId: string
   label: string
+  /** Optional localized-message ID; consumers fall back to `label`. */
+  labelKey?: string
   default?: string
 }
 
@@ -1723,7 +1749,11 @@ export type NodeQuickActionNodeScope = 'family' | 'level'
 export type NodeQuickAction = {
   id: string
   label: string
+  /** Optional localized-message ID; consumers fall back to `label`. */
+  labelKey?: string
   title?: string
+  /** Optional localized-message ID; consumers fall back to `title`. */
+  titleKey?: string
   /**
    * Builtin glyph token (side-add arrows, convert) or an {@link IconRef}
    * for kind-owned marks — quick actions with bespoke glyphs ship them
@@ -2177,6 +2207,8 @@ export type ParametricDescriptor<N> = {
 
 export type ParamAction<N> = {
   label: string
+  /** Optional localized-message ID; consumers fall back to `label`. */
+  labelKey?: string
   /** Optional asset URL for a leading icon — same shape as palette icons. */
   iconSrc?: string
   enabledIf?: (n: N) => boolean
@@ -2186,47 +2218,70 @@ export type ParamAction<N> = {
 
 export type ParamGroup<N> = {
   label: string
+  /** Optional localized-message ID; consumers fall back to `label`. */
+  labelKey?: string
   fields: ParamField<N>[]
 }
 
-export type ParamField<N> =
-  | {
-      key: keyof N
-      kind: 'number'
-      unit?: string
-      min?: number
-      max?: number
-      step?: number
-      visibleIf?: (n: N) => boolean
-      customEditor?: ComponentType
-    }
-  | { key: keyof N; kind: 'boolean'; visibleIf?: (n: N) => boolean }
-  | {
-      key: keyof N
-      kind: 'enum'
-      options: readonly string[]
-      /** Defaults to 'select' (dropdown). 'segmented' renders the inline
-       *  tabbed switcher — better for short option lists (2-4 items). */
-      display?: 'select' | 'segmented'
-      visibleIf?: (n: N) => boolean
-    }
-  | { key: keyof N; kind: 'vec3'; visibleIf?: (n: N) => boolean }
-  | { key: keyof N; kind: 'color'; visibleIf?: (n: N) => boolean }
-  | { key: keyof N; kind: 'material'; visibleIf?: (n: N) => boolean }
-  | { key: keyof N; kind: 'ref'; refKind: string; visibleIf?: (n: N) => boolean }
-  /** Escape hatch for fields that don't map to a single node key —
-   *  derived values (`length` from `start`/`end`), sliders with
-   *  dynamic min/max (curve sagitta bounded by chord length),
-   *  composed editors, etc. The kind owns the rendering and the
-   *  update logic. `key` here is just a stable React key/label. */
-  | {
-      key: string
-      kind: 'custom'
-      component: ComponentType<{ node: N; onUpdate: (patch: Partial<N>) => void }>
-      visibleIf?: (n: N) => boolean
-    }
+export type ParamFieldPresentation = {
+  /** Explicit English fallback. When omitted, consumers may prettify `key`. */
+  label?: string
+  /** Optional localized-message ID; consumers fall back to `label`, then `key`. */
+  labelKey?: string
+}
 
-export type Issue = { field?: string; msg: string; severity?: 'error' | 'warning' }
+export type ParamField<N> = ParamFieldPresentation &
+  (
+    | {
+        key: keyof N
+        kind: 'number'
+        unit?: string
+        min?: number
+        max?: number
+        step?: number
+        visibleIf?: (n: N) => boolean
+        customEditor?: ComponentType
+      }
+    | { key: keyof N; kind: 'boolean'; visibleIf?: (n: N) => boolean }
+    | {
+        key: keyof N
+        kind: 'enum'
+        options: readonly string[]
+        /** Stable option value → explicit English display fallback. */
+        optionLabels?: Readonly<Record<string, string>>
+        /** Stable option value → localized-message ID. */
+        optionLabelKeys?: Readonly<Record<string, string>>
+        /** Defaults to 'select' (dropdown). 'segmented' renders the inline
+         *  tabbed switcher — better for short option lists (2-4 items). */
+        display?: 'select' | 'segmented'
+        visibleIf?: (n: N) => boolean
+      }
+    | { key: keyof N; kind: 'vec3'; visibleIf?: (n: N) => boolean }
+    | { key: keyof N; kind: 'color'; visibleIf?: (n: N) => boolean }
+    | { key: keyof N; kind: 'material'; visibleIf?: (n: N) => boolean }
+    | { key: keyof N; kind: 'ref'; refKind: string; visibleIf?: (n: N) => boolean }
+    /** Escape hatch for fields that don't map to a single node key —
+     *  derived values (`length` from `start`/`end`), sliders with
+     *  dynamic min/max (curve sagitta bounded by chord length),
+     *  composed editors, etc. The kind owns the rendering and the
+     *  update logic. `key` here is just a stable React key/label. */
+    | {
+        key: string
+        kind: 'custom'
+        component: ComponentType<{ node: N; onUpdate: (patch: Partial<N>) => void }>
+        visibleIf?: (n: N) => boolean
+      }
+  )
+
+export type Issue = {
+  field?: string
+  /** Stable diagnostic identifier for localized consumers. */
+  code?: string
+  /** Structured interpolation values for a localized diagnostic. */
+  values?: Record<string, string | number>
+  msg: string
+  severity?: 'error' | 'warning'
+}
 
 // ─── Affordance ──────────────────────────────────────────────────────
 

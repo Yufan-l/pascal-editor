@@ -148,13 +148,20 @@ export const wallDefinition: NodeDefinition<typeof WallNode> = {
   floorplanSiblingOverrides: wallFloorplanSiblingOverrides,
 
   toolHints: [
-    { key: 'Left click', label: 'Set wall start / end' },
-    { key: 'Esc', label: 'Cancel' },
+    {
+      key: 'Left click',
+      keyLabelKey: 'editor.settings.shortcuts.input.leftClick',
+      label: 'Set wall start / end',
+      labelKey: 'nodes.wall.hints.setStartEnd',
+    },
+    { key: 'Esc', label: 'Cancel', labelKey: 'nodes.common.cancel' },
   ],
 
   presentation: {
     label: 'Wall',
+    labelKey: 'nodes.wall.label',
     description: 'A straight or curved wall segment. Hosts doors, windows, and wall-mounted items.',
+    descriptionKey: 'nodes.wall.description',
     icon: { kind: 'url', src: '/icons/wall.webp' },
     paletteSection: 'structure',
     paletteOrder: 10,

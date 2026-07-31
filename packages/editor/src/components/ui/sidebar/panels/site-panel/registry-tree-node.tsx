@@ -1,9 +1,12 @@
 import { Icon as IconifyIcon } from '@iconify/react'
 import { type AnyNodeId, nodeRegistry, useScene } from '@pascal-app/core'
+import { useI18n } from '@pascal-app/i18n'
 import { useViewer } from '@pascal-app/viewer'
 import Image from 'next/image'
 import { memo, useCallback, useEffect, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
+import { editorMessages } from '../../../../../i18n/messages'
+import { translateRegistryMessage } from '../../../../../i18n/registry'
 import { resolveNodeSnapTarget, SnapTargetIcon } from '../../../snap-target-badge'
 import { InlineRenameInput } from './inline-rename-input'
 import {
@@ -34,6 +37,7 @@ export const RegistryTreeNode = memo(function RegistryTreeNode({
   depth,
   isLast,
 }: RegistryTreeNodeProps) {
+  const { t } = useI18n()
   const [isEditing, setIsEditing] = useState(false)
   const [expanded, setExpanded] = useState(true)
   const isVisible = useScene((s) => s.nodes[nodeId]?.visible !== false)
@@ -61,8 +65,16 @@ export const RegistryTreeNode = memo(function RegistryTreeNode({
       />
     )
   const snapTarget = resolveNodeSnapTarget(node)
+  const authoredName = node
+    ? tree?.label?.(node, useScene.getState().nodes) || node.name
+    : undefined
   const defaultName =
-    node ? tree?.label?.(node, useScene.getState().nodes) || node.name || presentation?.label || 'Node' : 'Node'
+    authoredName ||
+    translateRegistryMessage(
+      t,
+      presentation?.labelKey,
+      presentation?.label ?? t(editorMessages.node),
+    )
   const hasChildren = children.length > 0
 
   useEffect(() => {

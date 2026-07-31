@@ -11,6 +11,7 @@ import {
   useEditor,
   useFloorplanMode,
 } from '@pascal-app/editor'
+import { useI18n } from '@pascal-app/i18n'
 import { useLiquidLineToolOptions } from '@pascal-app/nodes'
 import Image from 'next/image'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
@@ -20,6 +21,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/toolbar-tooltip'
+import { type AppMessageKey, appMessages } from '@/i18n/messages'
 import { cn } from '@/lib/utils'
 
 /**
@@ -41,6 +43,8 @@ type BuildType = {
   /** Selection id — equals `kind` for tool types, `'painting'` for paint mode, `'mep'` for the MEP group. */
   id: string
   label: string
+  labelMessage?: AppMessageKey
+  labelKey?: string
   /** Raster asset tile (legacy Build sidebar artwork). */
   iconSrc: string
   /** Present for structure-tool types (absent for paint mode and the MEP group). */
@@ -54,28 +58,113 @@ type MepItem = {
   /** Selection id — equals `kind`. */
   id: string
   label: string
+  labelMessage: AppMessageKey
   iconSrc: string
   kind: MepToolKind
 }
 
 // Same icons + ordering as the community Build sidebar, minus presets.
 const BASE_BUILD_TYPES: BuildType[] = [
-  { id: 'wall', label: 'Wall', iconSrc: '/icons/wall.webp', kind: 'wall' },
-  { id: 'fence', label: 'Fence', iconSrc: '/icons/fence.webp', kind: 'fence' },
-  { id: 'slab', label: 'Slab', iconSrc: '/icons/floor.webp', kind: 'slab' },
-  { id: 'ceiling', label: 'Ceiling', iconSrc: '/icons/ceiling.webp', kind: 'ceiling' },
-  { id: 'roof', label: 'Roof', iconSrc: '/icons/roof.webp', kind: 'roof' },
-  { id: 'stair', label: 'Stairs', iconSrc: '/icons/stairs.webp', kind: 'stair' },
-  { id: 'elevator', label: 'Elevator', iconSrc: '/icons/elevator.webp', kind: 'elevator' },
-  { id: 'door', label: 'Door', iconSrc: '/icons/door.webp', kind: 'door' },
-  { id: 'window', label: 'Window', iconSrc: '/icons/window.webp', kind: 'window' },
-  { id: 'column', label: 'Column', iconSrc: '/icons/column.webp', kind: 'column' },
-  { id: 'shelf', label: 'Shelf', iconSrc: '/icons/shelf.webp', kind: 'shelf' },
-  { id: 'spawn', label: 'Spawn Point', iconSrc: '/icons/spawn-point.webp', kind: 'spawn' },
+  {
+    id: 'wall',
+    label: 'Wall',
+    labelMessage: 'wall',
+    iconSrc: '/icons/wall.webp',
+    kind: 'wall',
+  },
+  {
+    id: 'fence',
+    label: 'Fence',
+    labelMessage: 'fence',
+    iconSrc: '/icons/fence.webp',
+    kind: 'fence',
+  },
+  {
+    id: 'slab',
+    label: 'Slab',
+    labelMessage: 'slab',
+    iconSrc: '/icons/floor.webp',
+    kind: 'slab',
+  },
+  {
+    id: 'ceiling',
+    label: 'Ceiling',
+    labelMessage: 'ceiling',
+    iconSrc: '/icons/ceiling.webp',
+    kind: 'ceiling',
+  },
+  {
+    id: 'roof',
+    label: 'Roof',
+    labelMessage: 'roof',
+    iconSrc: '/icons/roof.webp',
+    kind: 'roof',
+  },
+  {
+    id: 'stair',
+    label: 'Stairs',
+    labelMessage: 'stairs',
+    iconSrc: '/icons/stairs.webp',
+    kind: 'stair',
+  },
+  {
+    id: 'elevator',
+    label: 'Elevator',
+    labelMessage: 'elevator',
+    iconSrc: '/icons/elevator.webp',
+    kind: 'elevator',
+  },
+  {
+    id: 'door',
+    label: 'Door',
+    labelMessage: 'door',
+    iconSrc: '/icons/door.webp',
+    kind: 'door',
+  },
+  {
+    id: 'window',
+    label: 'Window',
+    labelMessage: 'window',
+    iconSrc: '/icons/window.webp',
+    kind: 'window',
+  },
+  {
+    id: 'column',
+    label: 'Column',
+    labelMessage: 'column',
+    iconSrc: '/icons/column.webp',
+    kind: 'column',
+  },
+  {
+    id: 'shelf',
+    label: 'Shelf',
+    labelMessage: 'shelf',
+    iconSrc: '/icons/shelf.webp',
+    kind: 'shelf',
+  },
+  {
+    id: 'spawn',
+    label: 'Spawn Point',
+    labelMessage: 'spawnPoint',
+    iconSrc: '/icons/spawn-point.webp',
+    kind: 'spawn',
+  },
   // Group tile — no tool of its own; opens the MEP sub-grid below (like Roof).
-  { id: 'mep', label: 'MEP', iconSrc: '/icons/HVAC.webp' },
-  { id: 'painting', label: 'Painting', iconSrc: '/icons/paint.webp', mode: 'material-paint' },
-  { id: 'terrain', label: 'Terrain', iconSrc: '/icons/mesh.webp', mode: 'terrain-sculpt' },
+  { id: 'mep', label: 'MEP', labelMessage: 'mep', iconSrc: '/icons/HVAC.webp' },
+  {
+    id: 'painting',
+    label: 'Painting',
+    labelMessage: 'painting',
+    iconSrc: '/icons/paint.webp',
+    mode: 'material-paint',
+  },
+  {
+    id: 'terrain',
+    label: 'Terrain',
+    labelMessage: 'terrain',
+    iconSrc: '/icons/mesh.webp',
+    mode: 'terrain-sculpt',
+  },
 ]
 
 function collectBuildTypes(floorplanMode: FloorplanMode): BuildType[] {
@@ -102,6 +191,7 @@ function collectBuildTypes(floorplanMode: FloorplanMode): BuildType[] {
       id: kind,
       kind,
       label: presentation.label,
+      labelKey: presentation.labelKey,
       iconSrc: presentation.icon.kind === 'url' ? presentation.icon.src : '/icons/spawn-point.webp',
       paletteOrder: presentation.paletteOrder ?? Number.MAX_SAFE_INTEGER,
     })
@@ -113,31 +203,64 @@ function collectBuildTypes(floorplanMode: FloorplanMode): BuildType[] {
 // MEP sub-grid surfaced under the "MEP" tile — same icons + ordering the MEP
 // tools had in the community Build sidebar.
 const MEP_ITEMS: MepItem[] = [
-  { id: 'duct-segment', label: 'Duct', iconSrc: '/icons/duct.webp', kind: 'duct-segment' },
+  {
+    id: 'duct-segment',
+    label: 'Duct',
+    labelMessage: 'duct',
+    iconSrc: '/icons/duct.webp',
+    kind: 'duct-segment',
+  },
   {
     id: 'duct-terminal',
     label: 'Register',
+    labelMessage: 'register',
     iconSrc: '/icons/registers.webp',
     kind: 'duct-terminal',
   },
-  { id: 'hvac-equipment', label: 'HVAC Unit', iconSrc: '/icons/HVAC.webp', kind: 'hvac-equipment' },
-  { id: 'lineset', label: 'Lineset', iconSrc: '/icons/lineset.webp', kind: 'lineset' },
-  { id: 'liquid-line', label: 'Liquid Line', iconSrc: '/icons/lineset.webp', kind: 'liquid-line' },
-  { id: 'pipe-segment', label: 'DWV Pipe', iconSrc: '/icons/dwv-pipes.webp', kind: 'pipe-segment' },
+  {
+    id: 'hvac-equipment',
+    label: 'HVAC Unit',
+    labelMessage: 'hvacUnit',
+    iconSrc: '/icons/HVAC.webp',
+    kind: 'hvac-equipment',
+  },
+  {
+    id: 'lineset',
+    label: 'Lineset',
+    labelMessage: 'lineset',
+    iconSrc: '/icons/lineset.webp',
+    kind: 'lineset',
+  },
+  {
+    id: 'liquid-line',
+    label: 'Liquid Line',
+    labelMessage: 'liquidLine',
+    iconSrc: '/icons/lineset.webp',
+    kind: 'liquid-line',
+  },
+  {
+    id: 'pipe-segment',
+    label: 'DWV Pipe',
+    labelMessage: 'dwvPipe',
+    iconSrc: '/icons/dwv-pipes.webp',
+    kind: 'pipe-segment',
+  },
 ]
 
 /**
  * Activate a raw structure draw/cursor tool. Mirrors the editor's own
  * structure-tool activation (`setPhase`/`setStructureLayer`/`setMode`/`setTool`).
  */
-function activateBuildTool(kind: string): void {
+function activateBuildTool(kind: string, localizedLabel?: string): void {
   const ed = useEditor.getState()
   const definition = nodeRegistry.get(kind)
   const extension = getFloorplanNodeExtension(definition)
   if (
     !isFloorplanToolAvailableInMode(extension?.availableModes, useFloorplanMode.getState().mode)
   ) {
-    useFloorplanMode.getState().showExpertModeNotice(definition?.presentation?.label ?? kind)
+    useFloorplanMode
+      .getState()
+      .showExpertModeNotice(localizedLabel ?? definition?.presentation?.label ?? kind)
     return
   }
   const preferredView = extension?.preferredView
@@ -166,7 +289,7 @@ function activateTerrainSculptMode(): void {
   useEditor.getState().setMode('terrain-sculpt')
 }
 
-type RoofFeature = { kind: string; label: string; iconSrc: string }
+type RoofFeature = { kind: string; label: string; labelKey?: string; iconSrc: string }
 
 const ROOF_FEATURE_FALLBACK_ICON = '/icons/roof.webp'
 
@@ -204,12 +327,21 @@ const MEP_TOOL_KINDS = new Set<string>([
 ])
 
 export function BuildTab() {
+  const { t } = useI18n()
   const activeTool = useEditor((s) => s.tool)
   const mode = useEditor((s) => s.mode)
   const floorplanMode = useFloorplanMode((s) => s.mode)
   const follow = useLiquidLineToolOptions((s) => s.follow)
   const toggleFollow = useLiquidLineToolOptions((s) => s.toggleFollow)
   const buildTypes = useMemo(() => collectBuildTypes(floorplanMode), [floorplanMode])
+  const translateLabel = useCallback(
+    (item: { label: string; labelMessage?: AppMessageKey; labelKey?: string }) => {
+      if (item.labelMessage) return t(appMessages[item.labelMessage])
+      if (item.labelKey) return t({ id: item.labelKey, defaultMessage: item.label })
+      return item.label
+    },
+    [t],
+  )
 
   // The fitting / follow tools are armed from a segment's panel, not a grid
   // tile — keep the segment tile lit so the panel (and the way back) stays
@@ -244,6 +376,7 @@ export function BuildTab() {
       features.push({
         kind,
         label: def.presentation?.label ?? kind,
+        labelKey: def.presentation?.labelKey,
         iconSrc: icon?.kind === 'url' ? icon.src : ROOF_FEATURE_FALLBACK_ICON,
       })
     }
@@ -268,19 +401,22 @@ export function BuildTab() {
     return mode === 'build' && activeTool === type.kind
   }
 
-  const handleTypeClick = useCallback((type: BuildType) => {
-    if (type.mode === 'material-paint') {
-      activatePaintMode()
-    } else if (type.mode === 'terrain-sculpt') {
-      activateTerrainSculptMode()
-    } else if (type.id === 'mep') {
-      // MEP is a group tile: arm its first tool so a usable tool is active
-      // (and we leave any prior paint mode), then reveal the MEP sub-grid.
-      activateBuildTool('duct-segment')
-    } else if (type.kind) {
-      activateBuildTool(type.kind)
-    }
-  }, [])
+  const handleTypeClick = useCallback(
+    (type: BuildType) => {
+      if (type.mode === 'material-paint') {
+        activatePaintMode()
+      } else if (type.mode === 'terrain-sculpt') {
+        activateTerrainSculptMode()
+      } else if (type.id === 'mep') {
+        // MEP is a group tile: arm its first tool so a usable tool is active
+        // (and we leave any prior paint mode), then reveal the MEP sub-grid.
+        activateBuildTool('duct-segment', t(appMessages.duct))
+      } else if (type.kind) {
+        activateBuildTool(type.kind, translateLabel(type))
+      }
+    },
+    [t, translateLabel],
+  )
 
   // On open, land on the first build tool — parity with the community Build
   // sidebar, so switching to Build immediately arms a usable tool. Skip when a
@@ -305,6 +441,7 @@ export function BuildTab() {
         >
           {buildTypes.map((type) => {
             const active = isTypeActive(type)
+            const label = translateLabel(type)
             return (
               <Tooltip key={type.id}>
                 <TooltipTrigger asChild>
@@ -323,7 +460,7 @@ export function BuildTab() {
                     type="button"
                   >
                     <Image
-                      alt={type.label}
+                      alt={label}
                       className="size-full object-contain transition-transform duration-200 group-hover:scale-110"
                       height={48}
                       src={type.iconSrc}
@@ -332,7 +469,7 @@ export function BuildTab() {
                   </button>
                 </TooltipTrigger>
                 <TooltipContent className="pointer-events-none" side="top">
-                  {type.label}
+                  {label}
                 </TooltipContent>
               </Tooltip>
             )
@@ -352,7 +489,9 @@ export function BuildTab() {
         (activeTool === 'roof' || isRoofFeatureActive) &&
         roofFeatures.length > 0 ? (
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-          <div className="px-0.5 pt-1 font-medium text-muted-foreground text-xs">Features</div>
+          <div className="px-0.5 pt-1 font-medium text-muted-foreground text-xs">
+            {t(appMessages.features)}
+          </div>
           <TooltipProvider delayDuration={0} disableHoverableContent>
             <div
               className="grid gap-1.5"
@@ -360,6 +499,7 @@ export function BuildTab() {
             >
               {roofFeatures.map((feature) => {
                 const active = mode === 'build' && activeTool === feature.kind
+                const label = translateLabel(feature)
                 return (
                   <Tooltip key={feature.kind}>
                     <TooltipTrigger asChild>
@@ -378,7 +518,7 @@ export function BuildTab() {
                         type="button"
                       >
                         <Image
-                          alt={feature.label}
+                          alt={label}
                           className="size-full object-contain transition-transform duration-200 group-hover:scale-110"
                           height={48}
                           src={feature.iconSrc}
@@ -387,7 +527,7 @@ export function BuildTab() {
                       </button>
                     </TooltipTrigger>
                     <TooltipContent className="pointer-events-none" side="top">
-                      {feature.label}
+                      {label}
                     </TooltipContent>
                   </Tooltip>
                 )
@@ -397,7 +537,9 @@ export function BuildTab() {
         </div>
       ) : isMepActive ? (
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-          <div className="px-0.5 pt-1 font-medium text-muted-foreground text-xs">MEP</div>
+          <div className="px-0.5 pt-1 font-medium text-muted-foreground text-xs">
+            {t(appMessages.mep)}
+          </div>
           <TooltipProvider delayDuration={0} disableHoverableContent>
             <div
               className="grid gap-1.5 px-0.5"
@@ -405,6 +547,7 @@ export function BuildTab() {
             >
               {MEP_ITEMS.map((item) => {
                 const active = isMepItemActive(item)
+                const label = translateLabel(item)
                 return (
                   <Tooltip key={item.id}>
                     <TooltipTrigger asChild>
@@ -417,13 +560,13 @@ export function BuildTab() {
                         )}
                         onClick={() => {
                           triggerSFX('sfx:menu-click')
-                          activateBuildTool(item.kind)
+                          activateBuildTool(item.kind, label)
                         }}
                         onMouseEnter={() => triggerSFX('sfx:menu-hover')}
                         type="button"
                       >
                         <Image
-                          alt={item.label}
+                          alt={label}
                           className="size-full object-contain transition-transform duration-200 group-hover:scale-110"
                           height={48}
                           src={item.iconSrc}
@@ -432,7 +575,7 @@ export function BuildTab() {
                       </button>
                     </TooltipTrigger>
                     <TooltipContent className="pointer-events-none" side="top">
-                      {item.label}
+                      {label}
                     </TooltipContent>
                   </Tooltip>
                 )
@@ -442,7 +585,7 @@ export function BuildTab() {
 
           {ductContext ? (
             <div className="flex flex-col gap-1.5">
-              <span className="text-muted-foreground text-xs">Duct</span>
+              <span className="text-muted-foreground text-xs">{t(appMessages.duct)}</span>
               <button
                 className={cn(
                   'flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200',
@@ -452,7 +595,11 @@ export function BuildTab() {
                 )}
                 onClick={() => {
                   triggerSFX('sfx:menu-click')
-                  activateBuildTool(activeTool === 'duct-fitting' ? 'duct-segment' : 'duct-fitting')
+                  const nextTool = activeTool === 'duct-fitting' ? 'duct-segment' : 'duct-fitting'
+                  activateBuildTool(
+                    nextTool,
+                    t(nextTool === 'duct-segment' ? appMessages.duct : appMessages.addFitting),
+                  )
                 }}
                 onMouseEnter={() => triggerSFX('sfx:menu-hover')}
                 type="button"
@@ -465,14 +612,14 @@ export function BuildTab() {
                   src="/icons/duct-fitting.webp"
                   width={16}
                 />
-                Add Fitting
+                {t(appMessages.addFitting)}
               </button>
             </div>
           ) : null}
 
           {pipeContext ? (
             <div className="flex flex-col gap-1.5">
-              <span className="text-muted-foreground text-xs">DWV Pipe</span>
+              <span className="text-muted-foreground text-xs">{t(appMessages.dwvPipe)}</span>
               <button
                 className={cn(
                   'flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200',
@@ -482,7 +629,11 @@ export function BuildTab() {
                 )}
                 onClick={() => {
                   triggerSFX('sfx:menu-click')
-                  activateBuildTool(activeTool === 'pipe-fitting' ? 'pipe-segment' : 'pipe-fitting')
+                  const nextTool = activeTool === 'pipe-fitting' ? 'pipe-segment' : 'pipe-fitting'
+                  activateBuildTool(
+                    nextTool,
+                    t(nextTool === 'pipe-segment' ? appMessages.dwvPipe : appMessages.addFitting),
+                  )
                 }}
                 onMouseEnter={() => triggerSFX('sfx:menu-hover')}
                 type="button"
@@ -495,7 +646,7 @@ export function BuildTab() {
                   src="/icons/duct-fitting.webp"
                   width={16}
                 />
-                Add Fitting
+                {t(appMessages.addFitting)}
               </button>
               <button
                 className={cn(
@@ -506,7 +657,11 @@ export function BuildTab() {
                 )}
                 onClick={() => {
                   triggerSFX('sfx:menu-click')
-                  activateBuildTool(activeTool === 'pipe-trap' ? 'pipe-segment' : 'pipe-trap')
+                  const nextTool = activeTool === 'pipe-trap' ? 'pipe-segment' : 'pipe-trap'
+                  activateBuildTool(
+                    nextTool,
+                    t(nextTool === 'pipe-segment' ? appMessages.dwvPipe : appMessages.addTrap),
+                  )
                 }}
                 onMouseEnter={() => triggerSFX('sfx:menu-hover')}
                 type="button"
@@ -519,14 +674,14 @@ export function BuildTab() {
                   src="/icons/dwv-pipes.webp"
                   width={16}
                 />
-                Add Trap
+                {t(appMessages.addTrap)}
               </button>
             </div>
           ) : null}
 
           {liquidLineContext ? (
             <div className="flex flex-col gap-1.5">
-              <span className="text-muted-foreground text-xs">Liquid Line</span>
+              <span className="text-muted-foreground text-xs">{t(appMessages.liquidLine)}</span>
               <button
                 className={cn(
                   'flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200',
@@ -539,13 +694,13 @@ export function BuildTab() {
                 onMouseEnter={() => triggerSFX('sfx:menu-hover')}
                 type="button"
               >
-                <span>Follow lineset</span>
-                <span className="text-muted-foreground text-xs">{follow ? 'On' : 'Off'}</span>
+                <span>{t(appMessages.followLineset)}</span>
+                <span className="text-muted-foreground text-xs">
+                  {t(follow ? appMessages.on : appMessages.off)}
+                </span>
               </button>
               <span className="px-1 text-[11px] text-muted-foreground">
-                {follow
-                  ? 'Click a lineset to lay the line beside it.'
-                  : 'Trace a line alongside an existing lineset (F).'}
+                {follow ? t(appMessages.followLinesetActive) : t(appMessages.followLinesetInactive)}
               </span>
             </div>
           ) : null}

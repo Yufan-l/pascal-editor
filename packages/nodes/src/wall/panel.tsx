@@ -32,41 +32,44 @@ import {
   triggerSFX,
   useInteractionScope,
 } from '@pascal-app/editor'
+import { useI18n } from '@pascal-app/i18n'
 import { useViewer } from '@pascal-app/viewer'
 import { Spline } from 'lucide-react'
 import { useCallback, useMemo, useRef } from 'react'
+import { type NodesMessageKey, nodesMessages } from '../i18n/messages'
 import { resolveWallOpeningCeiling } from '../shared/wall-opening-ceiling'
 
 type WallTrimKey = 'skirting' | 'crown' | 'chairRail'
 
 const WALL_TRIM_PROFILE_OPTIONS: Record<
   WallTrimKey,
-  Array<{ label: string; value: WallTrimProfile }>
+  Array<{ labelKey: NodesMessageKey; value: WallTrimProfile }>
 > = {
   skirting: [
-    { label: 'Flat', value: 'flat' },
-    { label: 'Modern', value: 'base-modern' },
-    { label: 'Colonial', value: 'base-colonial' },
-    { label: 'Shoe', value: 'base-shoe' },
-    { label: 'Ogee', value: 'base-ogee' },
+    { labelKey: 'profileFlat', value: 'flat' },
+    { labelKey: 'profileModern', value: 'base-modern' },
+    { labelKey: 'profileColonial', value: 'base-colonial' },
+    { labelKey: 'profileShoe', value: 'base-shoe' },
+    { labelKey: 'profileOgee', value: 'base-ogee' },
   ],
   crown: [
-    { label: 'Flat', value: 'flat' },
-    { label: 'Cove', value: 'crown-cove' },
-    { label: 'Ogee', value: 'crown-ogee' },
-    { label: 'Craft', value: 'crown-craftsman' },
-    { label: 'Layered', value: 'crown-layered' },
+    { labelKey: 'profileFlat', value: 'flat' },
+    { labelKey: 'profileCove', value: 'crown-cove' },
+    { labelKey: 'profileOgee', value: 'crown-ogee' },
+    { labelKey: 'profileCraft', value: 'crown-craftsman' },
+    { labelKey: 'profileLayered', value: 'crown-layered' },
   ],
   chairRail: [
-    { label: 'Flat', value: 'flat' },
-    { label: 'Round', value: 'rail-rounded' },
-    { label: 'Ogee', value: 'rail-ogee' },
-    { label: 'Picture', value: 'rail-picture' },
-    { label: 'Step', value: 'rail-stepped' },
+    { labelKey: 'profileFlat', value: 'flat' },
+    { labelKey: 'profileRound', value: 'rail-rounded' },
+    { labelKey: 'profileOgee', value: 'rail-ogee' },
+    { labelKey: 'profilePicture', value: 'rail-picture' },
+    { labelKey: 'profileStep', value: 'rail-stepped' },
   ],
 }
 
 export default function WallPanel() {
+  const { t } = useI18n()
   const selectedId = useViewer((s) => s.selection.selectedIds[0])
   const unit = useViewer((s) => s.unit)
   const setSelection = useViewer((s) => s.setSelection)
@@ -205,12 +208,12 @@ export default function WallPanel() {
     <PanelWrapper
       icon="/icons/wall.webp"
       onClose={handleClose}
-      title={node.name || 'Wall'}
+      title={node.name || t(nodesMessages.wall)}
       width={280}
     >
-      <PanelSection title="Dimensions">
+      <PanelSection title={t(nodesMessages.dimensions)}>
         <SliderControl
-          label="Length"
+          label={t(nodesMessages.length)}
           max={metersToLinearUnit(20, unit)}
           min={metersToLinearUnit(0.1, unit)}
           onChange={(value) =>
@@ -224,7 +227,7 @@ export default function WallPanel() {
           value={displayLength}
         />
         <SliderControl
-          label="Height"
+          label={t(nodesMessages.height)}
           max={metersToLinearUnit(6, unit)}
           min={metersToLinearUnit(0.1, unit)}
           onChange={(v) =>
@@ -238,23 +241,23 @@ export default function WallPanel() {
           value={Math.round(displayHeight * 100) / 100}
         />
         <div className="px-1 font-medium text-[10px] text-muted-foreground/80 uppercase tracking-wider">
-          Base
+          {t(nodesMessages.base)}
         </div>
         <SegmentedControl
           onChange={handleBaseModeChange}
           options={[
-            { label: 'Fixed', value: 'fixed' },
-            { label: 'Follows level', value: 'terrain' },
+            { label: t(nodesMessages.fixed), value: 'fixed' },
+            { label: t(nodesMessages.followsLevel), value: 'terrain' },
           ]}
           value={followsTerrain ? 'terrain' : 'fixed'}
         />
         {followsTerrain && (
           <div className="px-1 text-[11px] text-muted-foreground">
-            Extends downward to meet the terrain. Height and top stay unchanged.
+            {t(nodesMessages.extendsToTerrain)}
           </div>
         )}
         <SliderControl
-          label="Thickness"
+          label={t(nodesMessages.thickness)}
           max={metersToLinearUnit(1, unit)}
           min={metersToLinearUnit(0.05, unit)}
           onChange={(v) =>
@@ -272,7 +275,7 @@ export default function WallPanel() {
         />
         {!hasWallChildrenBlockingCurve && (
           <SliderControl
-            label="Curve"
+            label={t(nodesMessages.curve)}
             max={Math.max(metersToLinearUnit(0.01, unit), displayMaxCurveOffset)}
             min={-Math.max(metersToLinearUnit(0.01, unit), displayMaxCurveOffset)}
             onChange={(v) =>
@@ -305,7 +308,7 @@ export default function WallPanel() {
       <WallTrimSection
         node={node}
         onUpdate={handleUpdate}
-        title="Skirting"
+        title={t(nodesMessages.skirting)}
         trimKey="skirting"
         trimValue={skirting}
         unit={unit}
@@ -315,7 +318,7 @@ export default function WallPanel() {
       <WallTrimSection
         node={node}
         onUpdate={handleUpdate}
-        title="Crown molding"
+        title={t(nodesMessages.crownMolding)}
         trimKey="crown"
         trimValue={crown}
         unit={unit}
@@ -325,7 +328,7 @@ export default function WallPanel() {
       <WallTrimSection
         node={node}
         onUpdate={handleUpdate}
-        title="Chair rail"
+        title={t(nodesMessages.chairRail)}
         trimKey="chairRail"
         trimValue={chairRail}
         unit={unit}
@@ -334,11 +337,11 @@ export default function WallPanel() {
       />
 
       {!hasWallChildrenBlockingCurve && (
-        <PanelSection title="Actions">
+        <PanelSection title={t(nodesMessages.actions)}>
           <ActionGroup>
             <ActionButton
               icon={<Spline className="h-3.5 w-3.5" />}
-              label="Curve"
+              label={t(nodesMessages.curve)}
               onClick={handleCurve}
             />
           </ActionGroup>
@@ -361,6 +364,7 @@ function WallFaceBandSection({
   unitLabel: string
   wallHeightMeters: number
 }) {
+  const { t } = useI18n()
   const bandConfig = getWallFaceBandConfig(node, wallHeightMeters)
   const bandCount = bandConfig.count
   const lowerHeight = bandConfig.lowerHeight
@@ -378,9 +382,9 @@ function WallFaceBandSection({
     })
 
   return (
-    <PanelSection title="Wall bands">
+    <PanelSection title={t(nodesMessages.wallBands)}>
       <SliderControl
-        label="Bands"
+        label={t(nodesMessages.bands)}
         max={4}
         min={1}
         onChange={(value) => onUpdate(buildWallFaceBandCountPatch(node, Math.round(value)))}
@@ -390,7 +394,7 @@ function WallFaceBandSection({
       />
       {bandCount >= 2 && (
         <SliderControl
-          label="Lower"
+          label={t(nodesMessages.lower)}
           max={metersToLinearUnit(wallHeightMeters, unit)}
           min={metersToLinearUnit(0, unit)}
           onChange={(value) =>
@@ -409,7 +413,7 @@ function WallFaceBandSection({
       )}
       {bandCount >= 3 && (
         <SliderControl
-          label="Middle"
+          label={t(nodesMessages.middle)}
           max={metersToLinearUnit(Math.max(0, wallHeightMeters - lowerHeight), unit)}
           min={metersToLinearUnit(0, unit)}
           onChange={(value) =>
@@ -428,7 +432,7 @@ function WallFaceBandSection({
       )}
       {bandCount >= 4 && (
         <SliderControl
-          label="Upper"
+          label={t(nodesMessages.upper)}
           max={metersToLinearUnit(Math.max(0, wallHeightMeters - lowerHeight - middleHeight), unit)}
           min={metersToLinearUnit(0, unit)}
           onChange={(value) =>
@@ -468,6 +472,7 @@ function WallTrimSection({
   unitLabel: string
   wallHeightMeters: number
 }) {
+  const { t } = useI18n()
   const updateTrim = (patch: Partial<NonNullable<WallNode['skirting']>>) =>
     onUpdate({
       [trimKey]: {
@@ -475,16 +480,22 @@ function WallTrimSection({
         ...patch,
       },
     } as Partial<WallNode>)
-  const profileOptions = WALL_TRIM_PROFILE_OPTIONS[trimKey]
-  const selectedProfile = profileOptions.some((option) => option.value === trimValue.profile)
+  const profileDescriptors = WALL_TRIM_PROFILE_OPTIONS[trimKey]
+  const profileOptions = profileDescriptors.map((option) => ({
+    label: t(nodesMessages[option.labelKey]),
+    value: option.value,
+  }))
+  const selectedProfile = profileDescriptors.some((option) => option.value === trimValue.profile)
     ? trimValue.profile
-    : profileOptions[0]!.value
+    : profileDescriptors[0]!.value
 
   return (
     <PanelSection title={title}>
       <ActionGroup>
         <ActionButton
-          label={trimValue.enabled ? `Hide ${title.toLowerCase()}` : `Show ${title.toLowerCase()}`}
+          label={t(trimValue.enabled ? nodesMessages.hideTrim : nodesMessages.showTrim, {
+            trim: title,
+          })}
           onClick={() => updateTrim({ enabled: !trimValue.enabled })}
         />
       </ActionGroup>
@@ -493,9 +504,9 @@ function WallTrimSection({
           <SegmentedControl
             onChange={(next) => updateTrim({ sides: next as any })}
             options={[
-              { label: 'Interior', value: 'interior' },
-              { label: 'Exterior', value: 'exterior' },
-              { label: 'Both', value: 'both' },
+              { label: t(nodesMessages.interior), value: 'interior' },
+              { label: t(nodesMessages.exterior), value: 'exterior' },
+              { label: t(nodesMessages.both), value: 'both' },
             ]}
             value={trimValue.sides}
           />
@@ -505,7 +516,7 @@ function WallTrimSection({
             value={selectedProfile}
           />
           <SliderControl
-            label="Height"
+            label={t(nodesMessages.height)}
             max={metersToLinearUnit(Math.max(0.05, wallHeightMeters), unit)}
             min={metersToLinearUnit(0.01, unit)}
             onChange={(value) =>
@@ -522,7 +533,7 @@ function WallTrimSection({
             value={metersToLinearUnit(trimValue.height, unit)}
           />
           <SliderControl
-            label="Proud"
+            label={t(nodesMessages.proud)}
             max={metersToLinearUnit(0.2, unit)}
             min={metersToLinearUnit(0.001, unit)}
             onChange={(value) =>
@@ -540,7 +551,7 @@ function WallTrimSection({
           />
           {trimKey === 'chairRail' && (
             <SliderControl
-              label="Offset"
+              label={t(nodesMessages.offset)}
               max={metersToLinearUnit(Math.max(0.05, wallHeightMeters - trimValue.height), unit)}
               min={metersToLinearUnit(0, unit)}
               onChange={(value) =>

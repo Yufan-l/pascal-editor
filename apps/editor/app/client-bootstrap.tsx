@@ -9,18 +9,45 @@
 // `loaded` guard inside `../lib/bootstrap` keeps the side effect
 // idempotent under HMR.
 import '../lib/bootstrap'
-import { type ReactNode, useEffect } from 'react'
+import { editorZhCN } from '@pascal-app/editor/i18n'
+import { I18nProvider, type LocaleCatalogs, type SupportedLocale } from '@pascal-app/i18n'
+import { nodesZhCN } from '@pascal-app/nodes/i18n'
+import { type ReactNode, useCallback, useEffect, useState } from 'react'
+import { appZhCN } from '../i18n/zh-CN'
+
+const FIRST_PARTY_CATALOGS = {
+  'zh-CN': [appZhCN, editorZhCN, nodesZhCN],
+} as const satisfies LocaleCatalogs
 
 export function ClientBootstrap({
   children,
   enableDevDiagnostics,
+  initialLocale,
 }: {
   children: ReactNode
   enableDevDiagnostics: boolean
+  initialLocale: SupportedLocale
 }) {
+  const [locale, setLocale] = useState(initialLocale)
+
+  const handleLocaleChange = useCallback((nextLocale: SupportedLocale) => {
+    setLocale(nextLocale)
+    document.documentElement.lang = nextLocale
+    document.cookie = `pascal-locale=${nextLocale}; Path=/; Max-Age=31536000; SameSite=Lax`
+  }, [])
+
   useEffect(() => {
     if (!enableDevDiagnostics) return
     import('react-scan').then(({ scan }) => scan({ enabled: true }))
   }, [enableDevDiagnostics])
-  return children
+
+  return (
+    <I18nProvider
+      catalogs={FIRST_PARTY_CATALOGS}
+      locale={locale}
+      onLocaleChange={handleLocaleChange}
+    >
+      {children}
+    </I18nProvider>
+  )
 }

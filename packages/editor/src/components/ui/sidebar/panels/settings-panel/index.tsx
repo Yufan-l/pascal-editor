@@ -4,6 +4,7 @@ import {
   useScene,
   validateBuildJson,
 } from '@pascal-app/core'
+import { LOCALE_METADATA, SUPPORTED_LOCALES, useI18n } from '@pascal-app/i18n'
 import { useViewer } from '@pascal-app/viewer'
 import { TreeView, VisualJson } from '@visual-json/react'
 import { Camera, Download, Map as MapIcon, Save, Trash2, Upload } from 'lucide-react'
@@ -16,6 +17,8 @@ import {
   useState,
 } from 'react'
 import { exportFloorplanPdf } from '../../../../../lib/floorplan/floorplan-export'
+import { editorMessages } from '../../../../../i18n/messages'
+import { SegmentedControl } from './../../../../../components/ui/controls/segmented-control'
 import { Button } from './../../../../../components/ui/primitives/button'
 import {
   Dialog,
@@ -183,6 +186,7 @@ export function SettingsPanel({
   projectVisibility,
   onVisibilityChange,
 }: SettingsPanelProps = {}) {
+  const { canChangeLocale, locale, setLocale, t } = useI18n()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const nodes = useScene((state) => state.nodes)
   const rootNodeIds = useScene((state) => state.rootNodeIds)
@@ -248,7 +252,7 @@ export function SettingsPanel({
               {
                 severity: 'error',
                 code: 'invalid_json',
-                message: 'File could not be parsed as JSON.',
+                message: t(editorMessages.invalidJson),
               },
             ],
             warnings: [],
@@ -319,15 +323,37 @@ export function SettingsPanel({
 
   return (
     <div className="flex flex-col gap-6 p-3">
+      {canChangeLocale && (
+        <div className="space-y-2">
+          <label className="font-medium text-muted-foreground text-xs uppercase">
+            {t(editorMessages.language)}
+          </label>
+          <SegmentedControl
+            onChange={setLocale}
+            options={SUPPORTED_LOCALES.map((value) => ({
+              label: LOCALE_METADATA[value].name,
+              value,
+            }))}
+            value={locale}
+          />
+        </div>
+      )}
+
       {/* Visibility Section (only for cloud projects) */}
       {projectId && !isLocalProject && (
         <div className="space-y-3">
-          <label className="font-medium text-muted-foreground text-xs uppercase">Visibility</label>
+          <label className="font-medium text-muted-foreground text-xs uppercase">
+            {t(editorMessages.visibility)}
+          </label>
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium text-sm">Public</div>
+              <div className="font-medium text-sm">{t(editorMessages.public)}</div>
               <div className="text-muted-foreground text-xs">
-                {projectVisibility?.isPrivate ? 'Only you' : 'Anyone'} can view
+                {t(
+                  projectVisibility?.isPrivate
+                    ? editorMessages.onlyYouCanView
+                    : editorMessages.anyoneCanView,
+                )}
               </div>
             </div>
             <Switch
@@ -337,8 +363,10 @@ export function SettingsPanel({
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium text-sm">Show 3D Scans</div>
-              <div className="text-muted-foreground text-xs">Visible to public viewers</div>
+              <div className="font-medium text-sm">{t(editorMessages.show3dScans)}</div>
+              <div className="text-muted-foreground text-xs">
+                {t(editorMessages.visibleToPublicViewers)}
+              </div>
             </div>
             <Switch
               checked={projectVisibility?.showScansPublic ?? true}
@@ -347,8 +375,10 @@ export function SettingsPanel({
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium text-sm">Show Floorplans</div>
-              <div className="text-muted-foreground text-xs">Visible to public viewers</div>
+              <div className="font-medium text-sm">{t(editorMessages.showFloorplans)}</div>
+              <div className="text-muted-foreground text-xs">
+                {t(editorMessages.visibleToPublicViewers)}
+              </div>
             </div>
             <Switch
               checked={projectVisibility?.showGuidesPublic ?? true}
@@ -357,8 +387,10 @@ export function SettingsPanel({
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium text-sm">Shadows</div>
-              <div className="text-muted-foreground text-xs">Cast shadows from lights</div>
+              <div className="font-medium text-sm">{t(editorMessages.shadows)}</div>
+              <div className="text-muted-foreground text-xs">
+                {t(editorMessages.castShadowsFromLights)}
+              </div>
             </div>
             <Switch
               checked={shadows}
@@ -370,17 +402,21 @@ export function SettingsPanel({
 
       {/* Export Section */}
       <div className="space-y-4">
-        <label className="font-medium text-muted-foreground text-xs uppercase">Export</label>
+        <label className="font-medium text-muted-foreground text-xs uppercase">
+          {t(editorMessages.export)}
+        </label>
 
         <div className="space-y-2">
-          <div className="font-medium text-muted-foreground text-xs">3D model</div>
+          <div className="font-medium text-muted-foreground text-xs">
+            {t(editorMessages.model3d)}
+          </div>
           <Button
             className="w-full justify-start gap-2"
             onClick={() => exportScene?.('glb')}
             variant="outline"
           >
             <Download className="size-4" />
-            Export GLB
+            {t(editorMessages.exportGlb)}
           </Button>
           <Button
             className="w-full justify-start gap-2"
@@ -388,7 +424,7 @@ export function SettingsPanel({
             variant="outline"
           >
             <Download className="size-4" />
-            Export STL
+            {t(editorMessages.exportStl)}
           </Button>
           <Button
             className="w-full justify-start gap-2"
@@ -396,14 +432,20 @@ export function SettingsPanel({
             variant="outline"
           >
             <Download className="size-4" />
-            Export OBJ
+            {t(editorMessages.exportObj)}
           </Button>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between font-medium text-muted-foreground text-xs">
-            <span>Floor plan</span>
-            <span>{floorplanMode === 'default' ? 'Default mode' : 'Expert mode'}</span>
+            <span>{t(editorMessages.floorPlan)}</span>
+            <span>
+              {t(
+                floorplanMode === 'default'
+                  ? editorMessages.defaultMode
+                  : editorMessages.expertMode,
+              )}
+            </span>
           </div>
           <Button
             className="w-full justify-start gap-2"
@@ -411,7 +453,7 @@ export function SettingsPanel({
             variant="outline"
           >
             <MapIcon className="size-4" />
-            Full floor plan
+            {t(editorMessages.fullFloorPlan)}
           </Button>
           <Button
             className="w-full justify-start gap-2"
@@ -419,7 +461,7 @@ export function SettingsPanel({
             variant="outline"
           >
             <MapIcon className="size-4" />
-            Structure only
+            {t(editorMessages.structureOnly)}
           </Button>
         </div>
       </div>
@@ -427,7 +469,9 @@ export function SettingsPanel({
       {/* Thumbnail Section (only for cloud projects) */}
       {projectId && !isLocalProject && (
         <div className="space-y-2">
-          <label className="font-medium text-muted-foreground text-xs uppercase">Thumbnail</label>
+          <label className="font-medium text-muted-foreground text-xs uppercase">
+            {t(editorMessages.thumbnail)}
+          </label>
           <Button
             className="w-full justify-start gap-2"
             disabled={isGeneratingThumbnail}
@@ -435,18 +479,24 @@ export function SettingsPanel({
             variant="outline"
           >
             <Camera className="size-4" />
-            {isGeneratingThumbnail ? 'Generating...' : 'Generate Thumbnail'}
+            {t(
+              isGeneratingThumbnail
+                ? editorMessages.generating
+                : editorMessages.generateThumbnail,
+            )}
           </Button>
         </div>
       )}
 
       {/* Save/Load Section */}
       <div className="space-y-2">
-        <label className="font-medium text-muted-foreground text-xs uppercase">Save & Load</label>
+        <label className="font-medium text-muted-foreground text-xs uppercase">
+          {t(editorMessages.saveAndLoad)}
+        </label>
 
         <Button className="w-full justify-start gap-2" onClick={handleSaveBuild} variant="outline">
           <Save className="size-4" />
-          Save Build
+          {t(editorMessages.saveBuild)}
         </Button>
 
         <Button
@@ -455,7 +505,7 @@ export function SettingsPanel({
           variant="outline"
         >
           <Upload className="size-4" />
-          Load Build
+          {t(editorMessages.loadBuild)}
         </Button>
 
         <input
@@ -475,27 +525,33 @@ export function SettingsPanel({
 
       {/* Audio Section */}
       <div className="space-y-2">
-        <label className="font-medium text-muted-foreground text-xs uppercase">Audio</label>
+        <label className="font-medium text-muted-foreground text-xs uppercase">
+          {t(editorMessages.audio)}
+        </label>
         <AudioSettingsDialog />
       </div>
 
       {/* Keyboard Section */}
       <div className="space-y-2">
-        <label className="font-medium text-muted-foreground text-xs uppercase">Keyboard</label>
+        <label className="font-medium text-muted-foreground text-xs uppercase">
+          {t(editorMessages.keyboard)}
+        </label>
         <KeyboardShortcutsDialog />
       </div>
 
       {/* Scene Graph */}
       <div className="space-y-1">
-        <label className="font-medium text-muted-foreground text-xs uppercase">Scene Graph</label>
+        <label className="font-medium text-muted-foreground text-xs uppercase">
+          {t(editorMessages.sceneGraph)}
+        </label>
         <Dialog>
           <DialogTrigger asChild>
             <Button className="h-auto justify-start p-0 text-sm" variant="link">
-              Explore scene graph
+              {t(editorMessages.exploreSceneGraph)}
             </Button>
           </DialogTrigger>
           <DialogContent className="h-[80vh] max-w-[95vw] gap-0 overflow-hidden border-0 bg-[#1e1e1e] p-0 shadow-none sm:max-w-5xl">
-            <DialogTitle className="sr-only">Scene Graph</DialogTitle>
+            <DialogTitle className="sr-only">{t(editorMessages.sceneGraph)}</DialogTitle>
             <div
               className="flex h-full min-h-0 w-full min-w-0 *:h-full *:w-full *:overflow-y-auto"
               onContextMenuCapture={blockSceneGraphMutations}
@@ -513,7 +569,9 @@ export function SettingsPanel({
 
       {/* Danger Zone */}
       <div className="space-y-2">
-        <label className="font-medium text-destructive text-xs uppercase">Danger Zone</label>
+        <label className="font-medium text-destructive text-xs uppercase">
+          {t(editorMessages.dangerZone)}
+        </label>
 
         <Button
           className="w-full justify-start gap-2"
@@ -521,7 +579,7 @@ export function SettingsPanel({
           variant="destructive"
         >
           <Trash2 className="size-4" />
-          Clear & Start New
+          {t(editorMessages.clearAndStartNew)}
         </Button>
       </div>
     </div>

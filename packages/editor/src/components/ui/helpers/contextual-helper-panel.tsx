@@ -1,5 +1,6 @@
 import { Icon } from '@iconify/react'
 import type { ToolHint } from '@pascal-app/core'
+import { useI18n } from '@pascal-app/i18n'
 import { Fragment, useSyncExternalStore } from 'react'
 import {
   CONTINUATION_PROFILES,
@@ -15,6 +16,7 @@ import {
   type SnapContext,
 } from '../../../lib/snapping-mode'
 import { cn } from '../../../lib/utils'
+import { translateRegistryMessage } from '../../../i18n/registry'
 import useEditor, { type GridSnapStep } from '../../../store/use-editor'
 import useFenceCurveDraft from '../../../store/use-fence-curve-draft'
 import { ShortcutToken } from '../primitives/shortcut-token'
@@ -46,9 +48,11 @@ const KEY_CELL_CLASS = 'flex items-center gap-1'
 // 'Left click'] reads "⌘ / ⇧ + click".
 function ShortcutSequence({
   active = false,
+  displayKeys,
   keys,
 }: {
   active?: boolean
+  displayKeys?: Array<string | string[]>
   keys: Array<string | string[]>
 }) {
   return (
@@ -61,20 +65,32 @@ function ShortcutSequence({
             </span>
           ) : null}
           {Array.isArray(entry) ? (
-            entry.map((alternative, altIndex) => (
+            entry.map((alternative, altIndex) => {
+              const displayEntry = displayKeys?.[index]
+              const displayValue = Array.isArray(displayEntry)
+                ? displayEntry[altIndex]
+                : undefined
+              return (
               <Fragment key={`${alternative}-${altIndex}`}>
                 {altIndex > 0 ? (
                   <span className="text-[9px] text-muted-foreground/70">/</span>
                 ) : null}
                 <ShortcutToken
                   className={cn(TOKEN_CLASS, active && 'border-white bg-white text-black shadow-sm')}
+                  displayValue={displayValue}
                   value={alternative}
                 />
               </Fragment>
-            ))
+              )
+            })
           ) : (
             <ShortcutToken
               className={cn(TOKEN_CLASS, active && 'border-white bg-white text-black shadow-sm')}
+              displayValue={
+                typeof displayKeys?.[index] === 'string'
+                  ? displayKeys[index]
+                  : undefined
+              }
               value={entry}
             />
           )}
@@ -94,6 +110,7 @@ function ChipRow({
   label,
   onClick,
   shortcut,
+  shortcutDisplayValue,
   tooltip,
 }: {
   ariaLabel?: string
@@ -102,12 +119,19 @@ function ChipRow({
   label: string
   onClick?: () => void
   shortcut?: string
+  shortcutDisplayValue?: string
   tooltip?: string
 }) {
   const body = (
     <>
       <span className={KEY_CELL_CLASS}>
-        {shortcut ? <ShortcutToken className={TOKEN_CLASS} value={shortcut} /> : null}
+        {shortcut ? (
+          <ShortcutToken
+            className={TOKEN_CLASS}
+            displayValue={shortcutDisplayValue}
+            value={shortcut}
+          />
+        ) : null}
       </span>
       <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground text-xs">
         {icon ? <Icon className="shrink-0" height={13} icon={icon} width={13} /> : null}
@@ -211,9 +235,19 @@ function SnappingChips({ context }: { context: SnapContext }) {
 // current value's label, and clicking the row (or the hint's key, handled by
 // the tool itself) cycles it.
 function ToolHintChipRow({ hint }: { hint: ToolHint & { chip: NonNullable<ToolHint['chip']> } }) {
+  const { t } = useI18n()
   const { chip } = hint
   const value = useSyncExternalStore(chip.subscribe, chip.value, chip.value)
-  const label = chip.labels[value] ?? hint.label
+  const fallbackLabel = chip.labels[value] ?? hint.label
+  const label = translateRegistryMessage(
+    t,
+    chip.labelKeys?.[value] ?? hint.labelKey,
+    fallbackLabel,
+  )
+  const shortcutDisplayValue = translateRegistryMessage(t, hint.keyLabelKey, hint.key)
+  const tooltip = chip.tooltip
+    ? translateRegistryMessage(t, chip.tooltipKey, chip.tooltip)
+    : undefined
   return (
     <ChipRow
       ariaLabel={label}
@@ -221,7 +255,8 @@ function ToolHintChipRow({ hint }: { hint: ToolHint & { chip: NonNullable<ToolHi
       label={label}
       onClick={chip.cycle}
       shortcut={hint.key}
-      tooltip={chip.tooltip}
+      shortcutDisplayValue={shortcutDisplayValue}
+      tooltip={tooltip}
     />
   )
 }
@@ -405,7 +440,11 @@ export function ContextualHelperPanel({
           className={cn(ROW_CLASS, 'items-start')}
           key={`${hint.keys.join('+')}:${hint.label}`}
         >
-          <ShortcutSequence active={hint.active} keys={hint.keys} />
+          <ShortcutSequence
+            active={hint.active}
+            displayKeys={hint.keyLabels}
+            keys={hint.keys}
+          />
           <div className="min-w-0">
             <div
               className={cn(

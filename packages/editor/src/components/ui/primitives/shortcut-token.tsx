@@ -1,6 +1,10 @@
+'use client'
+
 import { Icon } from '@iconify/react'
+import { useI18n } from '@pascal-app/i18n'
 import type * as React from 'react'
 
+import { editorMessages } from '../../../i18n/messages'
 import { cn } from '../../../lib/utils'
 
 const MOUSE_SHORTCUTS = {
@@ -39,17 +43,24 @@ type ShortcutTokenProps = React.ComponentProps<'kbd'> & {
 }
 
 function ShortcutToken({ className, displayValue, value, ...props }: ShortcutTokenProps) {
+  const { t } = useI18n()
   const mouseShortcut =
     value in MOUSE_SHORTCUTS ? MOUSE_SHORTCUTS[value as keyof typeof MOUSE_SHORTCUTS] : null
   const isCommand = COMMAND_VALUES.has(value)
   const isShift = value === 'Shift'
   const commandDisplay = IS_MAC ? '⌘' : 'Ctrl'
   const commandLabel = IS_MAC ? 'Command' : 'Control'
+  const mouseLabel =
+    value === 'Middle click'
+      ? t(editorMessages.shortcutMiddleClick)
+      : value === 'Right click'
+        ? t(editorMessages.shortcutRightClick)
+        : t(editorMessages.shortcutLeftClick)
 
   return (
     <kbd
       aria-label={
-        mouseShortcut?.label ??
+        (mouseShortcut ? mouseLabel : undefined) ??
         (isCommand ? commandLabel : isShift ? 'Shift' : (displayValue ?? value))
       }
       className={cn(
@@ -57,7 +68,7 @@ function ShortcutToken({ className, displayValue, value, ...props }: ShortcutTok
         (mouseShortcut || isShift) && 'justify-center px-1.5',
         className,
       )}
-      title={mouseShortcut?.label ?? (isCommand ? commandLabel : isShift ? 'Shift' : value)}
+      title={mouseShortcut ? mouseLabel : isCommand ? commandLabel : isShift ? 'Shift' : value}
       {...props}
     >
       {mouseShortcut ? (
@@ -70,7 +81,7 @@ function ShortcutToken({ className, displayValue, value, ...props }: ShortcutTok
             icon={mouseShortcut.icon}
             width={14}
           />
-          <span className="sr-only">{mouseShortcut.label}</span>
+          <span className="sr-only">{mouseLabel}</span>
         </>
       ) : isShift ? (
         // Icon rather than the ⇧ text glyph — the font renders the glyph's

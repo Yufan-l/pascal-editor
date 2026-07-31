@@ -35,6 +35,7 @@ import {
   WallNode,
   WindowNode,
 } from '@pascal-app/core'
+import { useI18n } from '@pascal-app/i18n'
 import { useViewer } from '@pascal-app/viewer'
 import { Html } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
@@ -42,6 +43,7 @@ import { useCallback, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useShallow } from 'zustand/react/shallow'
 import { useReducedMotion } from '../../hooks/use-reduced-motion'
+import { translateRegistryMessage } from '../../i18n/registry'
 import { resolveMoveActionNode } from '../../lib/direct-manipulation'
 import {
   createFreshPlacementSubtree,
@@ -283,6 +285,7 @@ function getHeightPillDimensions(node: WallNode | FenceNode): {
 }
 
 export function FloatingActionMenu() {
+  const { t } = useI18n()
   const reducedMotion = useReducedMotion()
   const selectedIds = useViewer((s) => s.selection.selectedIds)
   const updateNode = useScene((s) => s.updateNode)
@@ -834,31 +837,37 @@ export function FloatingActionMenu() {
                 onPointerDown={(e) => e.stopPropagation()}
                 onPointerUp={(e) => e.stopPropagation()}
               >
-                {quickActions.map((action) => (
-                  <button
-                    aria-disabled={action.disabled || undefined}
-                    aria-label={action.title ?? action.label}
-                    className={cn(
-                      'tooltip-trigger flex items-center rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground',
-                      action.disabled &&
-                        'cursor-not-allowed opacity-40 hover:bg-transparent hover:text-muted-foreground',
-                    )}
-                    disabled={action.disabled && !action.blockedFeedback}
-                    key={action.id}
-                    onClick={handleQuickAction(action)}
-                    title={action.title ?? action.label}
-                    type="button"
-                  >
-                    <span className="flex items-center gap-1.5" data-quick-action-feedback>
-                      <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-current">
-                        <QuickActionIcon action={action} />
+                {quickActions.map((action) => {
+                  const label = translateRegistryMessage(t, action.labelKey, action.label)
+                  const title = action.title
+                    ? translateRegistryMessage(t, action.titleKey, action.title)
+                    : label
+                  return (
+                    <button
+                      aria-disabled={action.disabled || undefined}
+                      aria-label={title}
+                      className={cn(
+                        'tooltip-trigger flex items-center rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground',
+                        action.disabled &&
+                          'cursor-not-allowed opacity-40 hover:bg-transparent hover:text-muted-foreground',
+                      )}
+                      disabled={action.disabled && !action.blockedFeedback}
+                      key={action.id}
+                      onClick={handleQuickAction(action)}
+                      title={title}
+                      type="button"
+                    >
+                      <span className="flex items-center gap-1.5" data-quick-action-feedback>
+                        <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-current">
+                          <QuickActionIcon action={action} />
+                        </span>
+                        <span className="whitespace-nowrap leading-none" data-quick-action-label>
+                          {label}
+                        </span>
                       </span>
-                      <span className="whitespace-nowrap leading-none" data-quick-action-label>
-                        {action.label}
-                      </span>
-                    </span>
-                  </button>
-                ))}
+                    </button>
+                  )
+                })}
               </div>
             ) : null}
             {/* Height-drag dimension pill. Absolutely positioned just above

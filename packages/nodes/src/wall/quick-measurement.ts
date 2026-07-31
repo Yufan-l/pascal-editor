@@ -15,14 +15,31 @@ export function wallQuickMeasurement(node: WallNode): QuickMeasurementReport {
 
   return {
     title: node.name ?? 'Wall',
+    ...(node.name ? {} : { titleKey: 'nodes.wall.label' }),
     kindLabel: 'Wall',
+    kindLabelKey: 'nodes.wall.label',
     anchor: [frame.point.x, height * 0.55, frame.point.y],
     metrics: [
-      { key: 'length', label: 'Length', abbreviation: 'L', quantity: 'length', value: length },
-      { key: 'height', label: 'Height', abbreviation: 'H', quantity: 'length', value: height },
+      {
+        key: 'length',
+        label: 'Length',
+        labelKey: 'nodes.common.measurement.length',
+        abbreviation: 'L',
+        quantity: 'length',
+        value: length,
+      },
+      {
+        key: 'height',
+        label: 'Height',
+        labelKey: 'nodes.common.height',
+        abbreviation: 'H',
+        quantity: 'length',
+        value: height,
+      },
       {
         key: 'surface',
         label: 'Surface',
+        labelKey: 'nodes.common.measurement.surfaceArea',
         abbreviation: 'A',
         quantity: 'area',
         value: length * height,
@@ -30,11 +47,13 @@ export function wallQuickMeasurement(node: WallNode): QuickMeasurementReport {
       {
         key: 'thickness',
         label: 'Thickness',
+        labelKey: 'nodes.common.thickness',
         abbreviation: 'T',
         quantity: 'length',
         value: getWallThickness(node),
       },
     ],
     note: 'Gross face area before openings.',
+    noteKey: 'nodes.wall.measurement.grossFaceAreaNote',
   }
 }

@@ -1,0 +1,41 @@
+services:
+  editor:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    init: true
+    ports:
+      - "${PORT:-3002}:${PORT:-3002}"
+    environment:
+      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: "${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}"
+      PASCAL_DATA_DIR: /data
+      PORT: "${PORT:-3002}"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - pascal_data:/data
+
+  mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    init: true
+    entrypoint: ["/bin/sh", "/app/docker/mcp-entrypoint.sh"]
+    ports:
+      - "127.0.0.1:${MCP_PORT:-3917}:${MCP_PORT:-3917}"
+    environment:
+      MCP_PORT: "${MCP_PORT:-3917}"
+      PASCAL_DATA_DIR: /data
+      PASCAL_MCP_HTTP_TOKEN: "${PASCAL_MCP_HTTP_TOKEN:-pascal-dev-token}"
+    volumes:
+      - .:/app
+      - mcp_node_modules:/app/node_modules
+      - pascal_data:/data
+
+volumes:
+  node_modules:
+    name: pascal-editor-node-modules
+  mcp_node_modules:
+    name: pascal-mcp-node-modules
+  pascal_data:
+    name: pascal-editor-data

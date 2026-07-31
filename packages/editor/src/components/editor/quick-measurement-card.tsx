@@ -1,8 +1,11 @@
 'use client'
 
 import type { QuickMeasurementMetric, QuickMeasurementReport } from '@pascal-app/core'
+import { useI18n } from '@pascal-app/i18n'
 import { Crosshair, MapPin } from 'lucide-react'
 import { memo } from 'react'
+import { editorMessages } from '../../i18n/messages'
+import { translateRegistryMessage } from '../../i18n/registry'
 import { formatAreaLabel, formatLinearMeasurement, formatVolumeLabel } from '../../lib/measurements'
 
 function formatMetric(
@@ -26,11 +29,18 @@ export const QuickMeasurementCard = memo(function QuickMeasurementCard({
   metricNotation: 'meters' | 'millimeters'
   lensState: 'live' | 'pinned'
 }) {
+  const { t } = useI18n()
   const pinned = lensState === 'pinned'
+  const title = translateRegistryMessage(t, report.titleKey, report.title)
+  const kindLabel = translateRegistryMessage(t, report.kindLabelKey, report.kindLabel)
+  const stateLabel = t(pinned ? editorMessages.pinned : editorMessages.live)
 
   return (
     <div
-      aria-label={`${pinned ? 'Pinned' : 'Live'} ${report.kindLabel.toLowerCase()} measurements`}
+      aria-label={t(editorMessages.quickMeasurementsAria, {
+        state: stateLabel,
+        kind: kindLabel,
+      })}
       className="w-full min-w-0 overflow-hidden rounded-lg border border-border/45 bg-background/96 text-foreground shadow-elevation-3 backdrop-blur-xl"
       data-quick-measure-card
       data-quick-measure-state={lensState}
@@ -43,32 +53,46 @@ export const QuickMeasurementCard = memo(function QuickMeasurementCard({
           <Crosshair aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         )}
         <div className="min-w-0">
-          <div className="truncate font-medium text-xs leading-tight">{report.title}</div>
-          <div className="text-[10px] text-muted-foreground leading-tight">{report.kindLabel}</div>
+          <div className="truncate font-medium text-xs leading-tight">{title}</div>
+          <div className="text-[10px] text-muted-foreground leading-tight">{kindLabel}</div>
         </div>
         <span className="ml-auto shrink-0 rounded-full bg-muted px-2 py-0.5 font-medium text-[10px] text-muted-foreground">
-          {pinned ? 'Pinned' : 'Live lens'}
+          {t(pinned ? editorMessages.pinned : editorMessages.liveLens)}
         </span>
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))] gap-1.5 p-2">
-        {report.metrics.map((metric) => (
-          <div className="min-w-0 rounded-md bg-muted/60 px-2.5 py-1.5" key={metric.key}>
-            <div className="flex items-baseline gap-1 text-[10px] text-muted-foreground">
-              <span className="font-medium text-foreground/80">{metric.abbreviation}</span>
-              <span className="truncate">{metric.label}</span>
+        {report.metrics.map((metric) => {
+          const label = translateRegistryMessage(t, metric.labelKey, metric.label)
+          const abbreviation = translateRegistryMessage(
+            t,
+            metric.abbreviationKey,
+            metric.abbreviation,
+          )
+          return (
+            <div className="min-w-0 rounded-md bg-muted/60 px-2.5 py-1.5" key={metric.key}>
+              <div className="flex items-baseline gap-1 text-[10px] text-muted-foreground">
+                <span className="font-medium text-foreground/80">{abbreviation}</span>
+                <span className="truncate">{label}</span>
+              </div>
+              <div className="mt-0.5 truncate font-mono font-medium text-xs tabular-nums">
+                {formatMetric(metric, unit, metricNotation)}
+              </div>
             </div>
-            <div className="mt-0.5 truncate font-mono font-medium text-xs tabular-nums">
-              {formatMetric(metric, unit, metricNotation)}
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 border-border/60 border-t px-3 py-1.5 text-[10px] text-muted-foreground leading-tight">
-        {report.note ? <span className="min-w-48 flex-1">{report.note}</span> : <span />}
+        {report.note ? (
+          <span className="min-w-48 flex-1">
+            {translateRegistryMessage(t, report.noteKey, report.note)}
+          </span>
+        ) : (
+          <span />
+        )}
         <span className="ml-auto shrink-0 text-foreground/70">
-          {pinned ? 'Click another surface to replace' : 'Click surface to pin'}
+          {t(pinned ? editorMessages.replacePinnedMeasurement : editorMessages.pinMeasurement)}
         </span>
       </div>
     </div>

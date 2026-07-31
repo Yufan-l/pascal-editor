@@ -3,6 +3,8 @@ export type ContextualShortcutHint = {
   // itself be an array of alternatives (rendered joined by "/"), e.g.
   // [['Cmd/Ctrl', 'Shift'], 'Left click'] → "⌘ / ⇧ + click".
   keys: Array<string | string[]>
+  /** Optional localized display values matching `keys`; key identity stays stable. */
+  keyLabels?: Array<string | string[]>
   label: string
   // Optional secondary line under the label for a terser qualifier
   // (e.g. "disable 15° snap"). The HUD wraps both lines rather than truncating.

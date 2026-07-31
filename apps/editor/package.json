@@ -15,6 +15,7 @@
     "@number-flow/react": "^0.6.0",
     "@pascal-app/core": "*",
     "@pascal-app/editor": "*",
+    "@pascal-app/i18n": "*",
     "@pascal-app/mcp": "*",
     "@pascal-app/nodes": "*",
     "@pascal-app/plugin-trees": "github:pascalorg/plugin-trees#56d978cd9b409b716207b3f3d269455d3cd6f067",

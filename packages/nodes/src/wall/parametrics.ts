@@ -17,12 +17,40 @@ export const wallParametrics: ParametricDescriptor<WallNode> = {
   groups: [
     {
       label: 'Dimensions',
+      labelKey: 'nodes.common.dimensions',
       fields: [
-        { key: 'thickness', kind: 'number', unit: 'm', min: 0.05, max: 0.6, step: 0.01 },
+        {
+          key: 'thickness',
+          kind: 'number',
+          label: 'Thickness',
+          labelKey: 'nodes.common.thickness',
+          unit: 'm',
+          min: 0.05,
+          max: 0.6,
+          step: 0.01,
+        },
         // `height` may be absent (plane-bound top); the custom panel owns the
         // Follows storey / Custom height mode switch, so this is metadata only.
-        { key: 'height', kind: 'number', unit: 'm', min: 1.5, max: 6, step: 0.05 },
-        { key: 'curveOffset', kind: 'number', unit: 'm', min: -3, max: 3, step: 0.05 },
+        {
+          key: 'height',
+          kind: 'number',
+          label: 'Height',
+          labelKey: 'nodes.common.height',
+          unit: 'm',
+          min: 1.5,
+          max: 6,
+          step: 0.05,
+        },
+        {
+          key: 'curveOffset',
+          kind: 'number',
+          label: 'Curve offset',
+          labelKey: 'nodes.wall.fields.curveOffset',
+          unit: 'm',
+          min: -3,
+          max: 3,
+          step: 0.05,
+        },
       ],
     },
   ],

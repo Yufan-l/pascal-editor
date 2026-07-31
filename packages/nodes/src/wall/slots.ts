@@ -9,76 +9,100 @@ import { type SlotDeclaration, WALL_SURFACE_SLOT_DEFAULTS } from '@pascal-app/co
  */
 export function wallSlots(): SlotDeclaration[] {
   return [
-    { slotId: 'interior', label: 'Interior', default: WALL_SURFACE_SLOT_DEFAULTS.interior },
-    { slotId: 'exterior', label: 'Exterior', default: WALL_SURFACE_SLOT_DEFAULTS.exterior },
+    {
+      slotId: 'interior',
+      label: 'Interior',
+      labelKey: 'nodes.wall.slots.interior',
+      default: WALL_SURFACE_SLOT_DEFAULTS.interior,
+    },
+    {
+      slotId: 'exterior',
+      label: 'Exterior',
+      labelKey: 'nodes.wall.slots.exterior',
+      default: WALL_SURFACE_SLOT_DEFAULTS.exterior,
+    },
     {
       slotId: 'lowerInterior',
       label: 'Lower band (interior)',
+      labelKey: 'nodes.wall.slots.lowerBandInterior',
       default: WALL_SURFACE_SLOT_DEFAULTS.lowerInterior,
     },
     {
       slotId: 'middleInterior',
       label: 'Middle band (interior)',
+      labelKey: 'nodes.wall.slots.middleBandInterior',
       default: WALL_SURFACE_SLOT_DEFAULTS.middleInterior,
     },
     {
       slotId: 'upperInterior',
       label: 'Upper band (interior)',
+      labelKey: 'nodes.wall.slots.upperBandInterior',
       default: WALL_SURFACE_SLOT_DEFAULTS.upperInterior,
     },
     {
       slotId: 'topInterior',
       label: 'Top band (interior)',
+      labelKey: 'nodes.wall.slots.topBandInterior',
       default: WALL_SURFACE_SLOT_DEFAULTS.topInterior,
     },
     {
       slotId: 'lowerExterior',
       label: 'Lower band (exterior)',
+      labelKey: 'nodes.wall.slots.lowerBandExterior',
       default: WALL_SURFACE_SLOT_DEFAULTS.lowerExterior,
     },
     {
       slotId: 'middleExterior',
       label: 'Middle band (exterior)',
+      labelKey: 'nodes.wall.slots.middleBandExterior',
       default: WALL_SURFACE_SLOT_DEFAULTS.middleExterior,
     },
     {
       slotId: 'upperExterior',
       label: 'Upper band (exterior)',
+      labelKey: 'nodes.wall.slots.upperBandExterior',
       default: WALL_SURFACE_SLOT_DEFAULTS.upperExterior,
     },
     {
       slotId: 'topExterior',
       label: 'Top band (exterior)',
+      labelKey: 'nodes.wall.slots.topBandExterior',
       default: WALL_SURFACE_SLOT_DEFAULTS.topExterior,
     },
     {
       slotId: 'skirtingInterior',
       label: 'Skirting (interior)',
+      labelKey: 'nodes.wall.slots.skirtingInterior',
       default: WALL_SURFACE_SLOT_DEFAULTS.skirtingInterior,
     },
     {
       slotId: 'skirtingExterior',
       label: 'Skirting (exterior)',
+      labelKey: 'nodes.wall.slots.skirtingExterior',
       default: WALL_SURFACE_SLOT_DEFAULTS.skirtingExterior,
     },
     {
       slotId: 'crownInterior',
       label: 'Crown (interior)',
+      labelKey: 'nodes.wall.slots.crownInterior',
       default: WALL_SURFACE_SLOT_DEFAULTS.crownInterior,
     },
     {
       slotId: 'crownExterior',
       label: 'Crown (exterior)',
+      labelKey: 'nodes.wall.slots.crownExterior',
       default: WALL_SURFACE_SLOT_DEFAULTS.crownExterior,
     },
     {
       slotId: 'chairRailInterior',
       label: 'Chair rail (interior)',
+      labelKey: 'nodes.wall.slots.chairRailInterior',
       default: WALL_SURFACE_SLOT_DEFAULTS.chairRailInterior,
     },
     {
       slotId: 'chairRailExterior',
       label: 'Chair rail (exterior)',
+      labelKey: 'nodes.wall.slots.chairRailExterior',
       default: WALL_SURFACE_SLOT_DEFAULTS.chairRailExterior,
     },
   ]

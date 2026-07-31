@@ -1,4 +1,7 @@
 import type { ToolHint } from '@pascal-app/core'
+import { useI18n } from '@pascal-app/i18n'
+import { editorMessages } from '../../../i18n/messages'
+import { translateRegistryMessage } from '../../../i18n/registry'
 import type { ContinuationContext } from '../../../lib/continuation'
 import type { SnapContext } from '../../../lib/snapping-mode'
 import useEditor from '../../../store/use-editor'
@@ -24,6 +27,7 @@ export function RegisteredToolHelper({
   snapContext?: SnapContext | null
   continuationContext?: ContinuationContext | null
 }) {
+  const { t } = useI18n()
   // Live vertex count of an in-progress polygon draft, so hints gated on a
   // minimum (e.g. "Finish" at ≥ 3) only appear once they're actually possible.
   const draftVertexCount = useEditor((s) => s.draftVertexCount)
@@ -48,7 +52,13 @@ export function RegisteredToolHelper({
         const isBypassHint = hint.key === 'Shift'
         return {
           keys: [hint.key],
-          label: shiftPressed && isBypassHint ? 'Guided constraints bypassed' : hint.label,
+          keyLabels: [
+            translateRegistryMessage(t, hint.keyLabelKey, hint.key),
+          ],
+          label:
+            shiftPressed && isBypassHint
+              ? t(editorMessages.guidedConstraintsBypassed)
+              : translateRegistryMessage(t, hint.labelKey, hint.label),
           active: shiftPressed && isBypassHint,
         }
       })}

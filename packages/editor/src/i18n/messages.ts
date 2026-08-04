@@ -323,6 +323,23 @@ export const editorMessages = {
     id: 'editor.settings.shortcuts.note.rotateMultiSelection',
     defaultMessage: 'Also works mid-move while carrying the selection.',
   },
+  shortcutGroupSelection: {
+    id: 'editor.settings.shortcuts.action.groupSelection',
+    defaultMessage: 'Group the multi-selection (session only)',
+  },
+  shortcutGroupSelectionNote: {
+    id: 'editor.settings.shortcuts.note.groupSelection',
+    defaultMessage:
+      'Editor-only. Plain click a member later to reselect the whole group. Not saved with the project.',
+  },
+  shortcutUngroupSelection: {
+    id: 'editor.settings.shortcuts.action.ungroupSelection',
+    defaultMessage: 'Ungroup the session selection',
+  },
+  shortcutUngroupSelectionNote: {
+    id: 'editor.settings.shortcuts.note.ungroupSelection',
+    defaultMessage: 'Keeps the current selection; only dissolves the session group.',
+  },
   shortcutClearSelection: {
     id: 'editor.settings.shortcuts.action.clearSelection',
     defaultMessage: 'Clear the selection',

@@ -85,6 +85,11 @@ export const editorZhCN = {
     '选中至少 2 个对象时，2D 和 3D 中均可拖动所选对象或虚线框来平移；也可点击拾取，再次点击放置。',
   'editor.settings.shortcuts.action.rotateMultiSelection': '绕中心将多选对象旋转 ±45°',
   'editor.settings.shortcuts.note.rotateMultiSelection': '携带所选对象移动时也可使用。',
+  'editor.settings.shortcuts.action.groupSelection': '将多选对象编组（仅当前会话）',
+  'editor.settings.shortcuts.note.groupSelection':
+    '仅在编辑器中生效。之后单击任一成员即可重新选中整组；不会随项目保存。',
+  'editor.settings.shortcuts.action.ungroupSelection': '取消会话编组',
+  'editor.settings.shortcuts.note.ungroupSelection': '保留当前选择，仅解除会话组。',
   'editor.settings.shortcuts.action.clearSelection': '清除选择',
   'editor.settings.shortcuts.note.clearSelection': '点击空白处也可清除选择。',
   'editor.settings.shortcuts.action.moveSelected': '移动光标下方选中的可移动对象',

@@ -110,6 +110,16 @@ const SHORTCUT_CATEGORIES: ShortcutCategory[] = [
         noteKey: 'shortcutRotateMultiSelectionNote',
       },
       {
+        keys: ['Cmd/Ctrl', 'G'],
+        actionKey: 'shortcutGroupSelection',
+        noteKey: 'shortcutGroupSelectionNote',
+      },
+      {
+        keys: ['Cmd/Ctrl', 'Shift', 'G'],
+        actionKey: 'shortcutUngroupSelection',
+        noteKey: 'shortcutUngroupSelectionNote',
+      },
+      {
         keys: ['Esc'],
         actionKey: 'shortcutClearSelection',
         noteKey: 'shortcutClearSelectionNote',

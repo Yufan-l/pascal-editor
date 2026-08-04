@@ -19,15 +19,11 @@ export const appMessages = {
   },
   localEditorNotice: {
     id: 'app.localEditor.notice',
-    defaultMessage: 'Local editor — scenes are not saved.',
+    defaultMessage: 'Blank canvas — saved scenes are under Scenes (not this page).',
   },
   openRecentScenes: {
     id: 'app.localEditor.openRecentScenes',
-    defaultMessage: 'Open recent scenes',
-  },
-  createNew: {
-    id: 'app.localEditor.createNew',
-    defaultMessage: 'Create new',
+    defaultMessage: 'Open saved scenes',
   },
   allScenes: {
     id: 'app.scenes.all',
@@ -170,6 +166,15 @@ export const appMessages = {
   dismiss: {
     id: 'app.actions.dismiss',
     defaultMessage: 'Dismiss',
+  },
+  lightPreview: {
+    id: 'app.scene.lightPreview',
+    defaultMessage: 'Light preview',
+  },
+  lightPreviewDescription: {
+    id: 'app.scene.lightPreview.description',
+    defaultMessage:
+      'Skip the post-processing pipeline — lighter on the GPU, no ambient occlusion or selection outlines',
   },
   wall: {
     id: 'app.build.wall',

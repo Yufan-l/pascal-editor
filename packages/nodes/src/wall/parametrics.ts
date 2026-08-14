@@ -38,7 +38,7 @@ export const wallParametrics: ParametricDescriptor<WallNode> = {
           labelKey: 'nodes.common.height',
           unit: 'm',
           min: 1.5,
-          max: 6,
+          max: 20,
           step: 0.05,
         },
         {

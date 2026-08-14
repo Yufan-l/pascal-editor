@@ -52,7 +52,7 @@ The runtime and first operational migration are implemented:
 - `packages/nodes` owns a first-party catalog. Wall is the first migrated family, including its presentation, hints, inspector fields, material slots, custom panel, measurement features, and quick-measurement report.
 - Catalog parity and duplicate-ID tests cover every catalog migrated so far.
 
-Coverage is still incomplete. The current catalogs contain 144 `app.*`, 144 `editor.*`, and 65 `nodes.*` message IDs. `packages/viewer` does not yet provide a catalog, most reusable editor workflows remain unmigrated, and 45 built-in node families still need review. Switching to Chinese therefore still produces a mixed-language interface outside the migrated surfaces; the product must not describe the UI as fully localized until the acceptance criteria in this document are met.
+Coverage is still incomplete. The current catalogs contain 144 `app.*`, 144 `editor.*`, and 70 `nodes.*` message IDs. `packages/viewer` does not yet provide a catalog, most reusable editor workflows remain unmigrated, and 45 built-in node families still need review. Switching to Chinese therefore still produces a mixed-language interface outside the migrated surfaces; the product must not describe the UI as fully localized until the acceptance criteria in this document are met.
 
 ### Audit Snapshot — 2026-07-30
 

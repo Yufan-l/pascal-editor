@@ -3,19 +3,18 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SceneBridge } from '../bridge/scene-bridge'
-import { createSceneOperations } from '../operations'
 import { createPascalMcpServer } from '../server'
 import { connectHttp, type HttpTransportHandle } from './http'
 
-let bridge: SceneBridge
 let createServer: () => McpServer
 let handle: HttpTransportHandle | null = null
 
 beforeEach(() => {
-  bridge = new SceneBridge()
-  bridge.loadDefault()
-  const operations = createSceneOperations({ bridge })
-  createServer = () => createPascalMcpServer({ bridge, operations })
+  createServer = () => {
+    const bridge = new SceneBridge()
+    bridge.loadDefault()
+    return createPascalMcpServer({ bridge })
+  }
 })
 
 afterEach(async () => {
@@ -174,4 +173,46 @@ test('connectHttp handles allowed CORS preflight', async () => {
 
   expect(response.status).toBe(204)
   expect(response.headers.get('access-control-allow-origin')).toBe('https://app.example')
+})
+
+test('connectHttp serves authenticated supervisor health', async () => {
+  handle = await connectHttp(createServer, 0, {
+    authToken: 'secret',
+    health: { version: '1.2.3', instanceId: 'instance-1' },
+  })
+
+  const response = await fetch(`http://127.0.0.1:${handle.port}/health`, {
+    headers: { authorization: 'Bearer secret' },
+  })
+
+  expect(response.status).toBe(200)
+  expect(await response.json()).toEqual({
+    status: 'ok',
+    app: 'mcp',
+    version: '1.2.3',
+    instanceId: 'instance-1',
+  })
+})
+
+test('connectHttp isolates simultaneous client sessions', async () => {
+  handle = await connectHttp(() => {
+    const sessionBridge = new SceneBridge()
+    sessionBridge.loadDefault()
+    return createPascalMcpServer({ bridge: sessionBridge })
+  }, 0)
+  const url = new URL(`http://127.0.0.1:${handle.port}/mcp`)
+  const first = new Client({ name: 'first-client', version: '0.0.0' })
+  const second = new Client({ name: 'second-client', version: '0.0.0' })
+
+  try {
+    await Promise.all([
+      first.connect(new StreamableHTTPClientTransport(url)),
+      second.connect(new StreamableHTTPClientTransport(url)),
+    ])
+    const [firstTools, secondTools] = await Promise.all([first.listTools(), second.listTools()])
+    expect(firstTools.tools.length).toBeGreaterThan(0)
+    expect(secondTools.tools.length).toBe(firstTools.tools.length)
+  } finally {
+    await Promise.all([first.close(), second.close()])
+  }
 })

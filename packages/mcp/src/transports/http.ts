@@ -37,6 +37,8 @@ export type HttpTransportOptions = {
   allowedOrigins?: string[]
   /** Per-client request cap per minute. Set <= 0 to disable. */
   rateLimitPerMinute?: number
+  /** Authenticated identity returned from GET /health for local supervisors. */
+  health?: { version: string; instanceId: string }
 }
 
 /**
@@ -100,6 +102,21 @@ export async function connectHttp(
   }
 
   const routeRequest = async (req: IncomingMessage, res: ServerResponse) => {
+    const pathname = req.url ? new URL(req.url, 'http://localhost').pathname : '/'
+    if (pathname === '/health') {
+      if (!options.health) return sendJson(res, 404, { error: 'not_found' })
+      if (req.method !== 'GET') {
+        res.setHeader('Allow', 'GET')
+        return sendJson(res, 405, { error: 'method_not_allowed' })
+      }
+      return sendJson(res, 200, {
+        status: 'ok',
+        app: 'mcp',
+        version: options.health.version,
+        instanceId: options.health.instanceId,
+      })
+    }
+
     const sessionId = headerValue(req.headers['mcp-session-id'])
     if (sessionId) {
       const transport = sessions.get(sessionId)
@@ -108,6 +125,12 @@ export async function connectHttp(
         return
       }
       await transport.handleRequest(req, res)
+      return
+    }
+
+    if (req.method === 'GET') {
+      res.setHeader('Allow', 'POST')
+      sendJson(res, 405, { error: 'session_required' })
       return
     }
 
@@ -203,7 +226,7 @@ function createHttpGuard(options: {
     }
 
     const pathname = req.url ? new URL(req.url, 'http://localhost').pathname : '/'
-    if (pathname !== '/mcp') {
+    if (pathname !== '/mcp' && pathname !== '/health') {
       sendJson(res, 404, { error: 'not_found' })
       return false
     }
@@ -216,7 +239,7 @@ function createHttpGuard(options: {
       }
     }
 
-    if (options.rateLimitPerMinute > 0) {
+    if (pathname === '/mcp' && options.rateLimitPerMinute > 0) {
       const now = Date.now()
       const key = req.socket.remoteAddress ?? 'unknown'
       const bucket = buckets.get(key)

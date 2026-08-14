@@ -144,11 +144,31 @@ export const nodesMessages = {
   },
   base: {
     id: 'nodes.wall.panel.base',
-    defaultMessage: 'Base',
+    defaultMessage: 'Bottom',
+  },
+  top: {
+    id: 'nodes.wall.panel.top',
+    defaultMessage: 'Top',
   },
   followsLevel: {
     id: 'nodes.wall.panel.followsLevel',
     defaultMessage: 'Follows level',
+  },
+  customHeight: {
+    id: 'nodes.wall.panel.customHeight',
+    defaultMessage: 'Custom height',
+  },
+  currentlyHeight: {
+    id: 'nodes.wall.panel.currentlyHeight',
+    defaultMessage: 'Currently {height}',
+  },
+  auto: {
+    id: 'nodes.wall.panel.auto',
+    defaultMessage: 'Auto',
+  },
+  fillToTerrain: {
+    id: 'nodes.wall.panel.fillToTerrain',
+    defaultMessage: 'Fill to terrain',
   },
   fixed: {
     id: 'nodes.wall.panel.fixed',

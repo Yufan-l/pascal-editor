@@ -1,5 +1,9 @@
 import { randomUUID, timingSafeEqual } from 'node:crypto'
-import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
+import {
+  createServer as createHttpServer,
+  type IncomingMessage,
+  type ServerResponse,
+} from 'node:http'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 
@@ -15,9 +19,11 @@ export type HttpTransportHandle = {
   host: string
   /** Port the server is actually listening on (useful when caller passed 0). */
   port: number
-  /** Gracefully close the HTTP server and the MCP transport. */
+  /** Gracefully close the HTTP server and all active MCP session transports. */
   close(): Promise<void>
 }
+
+export type McpServerFactory = () => McpServer
 
 export type HttpTransportOptions = {
   /**
@@ -34,11 +40,11 @@ export type HttpTransportOptions = {
 }
 
 /**
- * Attach an `McpServer` to a Streamable HTTP transport bound to a local port.
+ * Attach MCP server sessions to a Streamable HTTP endpoint bound to a local port.
  *
- * Uses the SDK's Node-flavored `StreamableHTTPServerTransport`, which accepts
- * `IncomingMessage`/`ServerResponse` directly via `handleRequest(req, res)`.
- * A new session ID is generated per connection (stateful mode).
+ * Each initialization request gets a fresh `McpServer` and stateful
+ * `StreamableHTTPServerTransport`. Later requests are routed to that transport
+ * through their `mcp-session-id` header.
  *
  * Listens on `127.0.0.1:<port>` (pass `0` for an ephemeral port in tests). The
  * returned handle exposes the actual bound port and a `close()` that stops
@@ -46,7 +52,7 @@ export type HttpTransportOptions = {
  * configure an auth token.
  */
 export async function connectHttp(
-  server: McpServer,
+  createMcpServer: McpServerFactory,
   port: number,
   options: HttpTransportOptions = {},
 ): Promise<HttpTransportHandle> {
@@ -63,19 +69,64 @@ export async function connectHttp(
     rateLimitPerMinute: options.rateLimitPerMinute ?? DEFAULT_RATE_LIMIT_PER_MINUTE,
   })
 
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: () => randomUUID(),
-  })
-  await server.connect(transport)
+  const sessions = new Map<string, StreamableHTTPServerTransport>()
+  const activeTransports = new Set<StreamableHTTPServerTransport>()
 
-  const httpServer = createServer((req, res) => {
+  const handleNewSession = async (req: IncomingMessage, res: ServerResponse) => {
+    let transport: StreamableHTTPServerTransport
+    const removeTransport = (sessionId = transport.sessionId) => {
+      if (sessionId) sessions.delete(sessionId)
+      activeTransports.delete(transport)
+    }
+    transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+      onsessioninitialized: (sessionId) => {
+        sessions.set(sessionId, transport)
+      },
+      onsessionclosed: removeTransport,
+    })
+    transport.onclose = removeTransport
+    activeTransports.add(transport)
+
+    try {
+      await createMcpServer().connect(transport)
+      await transport.handleRequest(req, res)
+    } finally {
+      if (!transport.sessionId) {
+        activeTransports.delete(transport)
+        await transport.close()
+      }
+    }
+  }
+
+  const routeRequest = async (req: IncomingMessage, res: ServerResponse) => {
+    const sessionId = headerValue(req.headers['mcp-session-id'])
+    if (sessionId) {
+      const transport = sessions.get(sessionId)
+      if (!transport) {
+        sendMcpError(res, 404, -32001, 'Session not found')
+        return
+      }
+      await transport.handleRequest(req, res)
+      return
+    }
+
+    if (req.method !== 'POST') {
+      sendMcpError(res, 400, -32000, 'Bad Request: Mcp-Session-Id header is required')
+      return
+    }
+
+    await handleNewSession(req, res)
+  }
+
+  const httpServer = createHttpServer((req, res) => {
     if (!guard(req, res)) return
-    transport.handleRequest(req, res).catch((err) => {
+    routeRequest(req, res).catch((err) => {
       // Log to stderr; never touch stdout (stdio transport uses it).
       console.error('[pascal-mcp] http transport error', err)
       if (!res.writableEnded) {
         try {
-          res.writeHead(500).end()
+          sendMcpError(res, 500, -32603, 'Internal error')
         } catch {
           // Response may already be partially sent; nothing more we can do.
         }
@@ -104,13 +155,23 @@ export async function connectHttp(
     host,
     port: boundPort,
     close: async () => {
+      const closeResults = await Promise.allSettled(
+        Array.from(activeTransports, (transport) => transport.close()),
+      )
+      activeTransports.clear()
+      sessions.clear()
       await new Promise<void>((resolve, reject) => {
         httpServer.close((err) => {
           if (err) reject(err)
           else resolve()
         })
       })
-      await transport.close()
+      const closeErrors = closeResults
+        .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
+        .map((result) => result.reason)
+      if (closeErrors.length > 0) {
+        throw new AggregateError(closeErrors, 'Failed to close one or more MCP sessions')
+      }
     },
   }
 }
@@ -217,6 +278,14 @@ function sendJson(res: ServerResponse, status: number, payload: unknown): void {
     res.setHeader('Content-Type', 'application/json; charset=utf-8')
   }
   res.writeHead(status).end(JSON.stringify(payload))
+}
+
+function sendMcpError(res: ServerResponse, status: number, code: number, message: string): void {
+  sendJson(res, status, {
+    jsonrpc: '2.0',
+    error: { code, message },
+    id: null,
+  })
 }
 
 function safeEqual(a: string, b: string): boolean {

@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 import { SceneBridge } from '../bridge/scene-bridge'
 import { version } from '../index'
+import { createSceneOperations } from '../operations'
 import { createPascalMcpServer } from '../server'
 import { createSceneStore } from '../storage'
 import { connectHttp } from '../transports/http'
@@ -62,14 +63,15 @@ async function main(): Promise<void> {
   }
 
   const store = await createSceneStore()
-  const server = createPascalMcpServer({ bridge, store })
+  const operations = createSceneOperations({ bridge, store })
+  const createServer = () => createPascalMcpServer({ bridge, operations })
 
   if (values.http) {
     const portNum = Number.parseInt(values.port ?? '3917', 10)
     if (!Number.isFinite(portNum) || portNum < 0 || portNum > 65_535) {
       throw new Error(`invalid --port value: ${values.port}`)
     }
-    const handle = await connectHttp(server, portNum, {
+    const handle = await connectHttp(createServer, portNum, {
       host: values.host,
       authToken: values['auth-token'],
       allowedOrigins: values['cors-origin'],
@@ -86,7 +88,7 @@ async function main(): Promise<void> {
     process.on('SIGTERM', shutdown)
   } else {
     // --stdio is the default when no transport flag is passed.
-    await connectStdio(server)
+    await connectStdio(createServer())
     console.error('[pascal-mcp] stdio server running')
   }
 }
